@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功夫茶 KUNG FU TEA - 線上點餐 v2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 功夫茶點餐系統專用樣式 - 使用命名空間避免衝突 */
+        .kungfu-tea-ordering {
+            /* 定義CSS變數，避免與其他模組衝突 */
+            --kt-primary: #667eea;
+            --kt-secondary: #764ba2;
+            --kt-text: #333;
+            --kt-bg: #f8f9ff;
+            --kt-white: #ffffff;
+            --kt-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            --kt-border: #e0e6ff;
+            --kt-success: #28a745;
+            --kt-warning: #ff6b6b;
+            
+            /* 重置樣式，確保完全隔離 */
+            all: initial;
+            font-family: 'Arial', '微軟正黑體', sans-serif !important;
+            background: linear-gradient(135deg, var(--kt-primary) 0%, var(--kt-secondary) 100%) !important;
+            min-height: 100vh !important;
+            color: var(--kt-text) !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 確保所有子元素都使用正確的盒模型 */
+        .kungfu-tea-ordering *,
+        .kungfu-tea-ordering *::before,
+        .kungfu-tea-ordering *::after {
+            box-sizing: border-box !important;
+        }
+
+        .kungfu-tea-ordering .container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+        }
+
+        .kungfu-tea-ordering header {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 20px !important;
+            padding: 30px !important;
+            text-align: center !important;
+            margin-bottom: 30px !important;
+            box-shadow: var(--kt-shadow) !important;
+        }
+
+        .kungfu-tea-ordering h1 {
+            color: var(--kt-secondary) !important;
+            font-size: 2rem !important;
+            margin-bottom: 10px !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
+            white-space: nowrap !important;
+        }
+
+        .kungfu-tea-ordering .subtitle {
+            color: #666 !important;
+            font-size: 1.2rem !important;
+            margin-bottom: 15px !important;
+        }
+
+        .kungfu-tea-ordering .store-info {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 15px !important;
+            padding: 15px !important;
+            margin-top: 10px !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            justify-content: center !important;
+            gap: 20px !important;
+            font-size: 0.9rem !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+            align-items: center !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .kungfu-tea-ordering .store-address {
+            display: none !important;
+        }
+
+        .kungfu-tea-ordering .store-phone {
+            color: var(--kt-text) !important;
+            font-weight: 500 !important;
+        }
+
+        .kungfu-tea-ordering .phone-link {
+            color: var(--kt-white) !important;
+            text-decoration: none !important;
+            background: linear-gradient(135deg, var(--kt-primary), var(--kt-secondary)) !important;
+            padding: 8px 15px !important;
+            border-radius: 20px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+            display: inline-block !important;
+        }
+
+        .kungfu-tea-ordering .phone-link:hover {
+            background: linear-gradient(135deg, var(--kt-secondary), var(--kt-primary)) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        }
+
+        .kungfu-tea-ordering .nav-link {
+            color: var(--kt-white) !important;
+            text-decoration: none !important;
+            background: linear-gradient(135deg, var(--kt-primary), var(--kt-secondary)) !important;
+            padding: 8px 15px !important;
+            border-radius: 20px !important;
+            transition: all 0.3s ease !important;
+            font-weight: 500 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        }
+
+        .kungfu-tea-ordering .nav-link:hover {
+            background: linear-gradient(135deg, var(--kt-secondary), var(--kt-primary)) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        }
+
+        /* 外送平台專用樣式 */
+        .kungfu-tea-ordering .delivery-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 6px;
+            font-size: 12px;
+            text-align: center;
+            line-height: 16px;
+            vertical-align: middle;
+        }
+
+        .kungfu-tea-ordering .foodpanda-icon {
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            color: white;
+            font-size: 10px;
+        }
+
+        .kungfu-tea-ordering .ubereats-icon {
+            background: linear-gradient(135deg, #06c167, #00a651);
+            color: white;
+            font-size: 10px;
+        }
+
+        .kungfu-tea-ordering .phone-icon {
+            background: transparent;
+            color: white;
+            font-size: 10px;
+        }
+
+        .kungfu-tea-ordering .foodpanda-link {
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab) !important;
+        }
+
+        .kungfu-tea-ordering .foodpanda-link:hover {
+            background: linear-gradient(135deg, #ff8fab, #ff6b9d) !important;
+        }
+
+        .kungfu-tea-ordering .ubereats-link {
+            background: linear-gradient(135deg, #06c167, #00a651) !important;
+        }
+
+        .kungfu-tea-ordering .ubereats-link:hover {
+            background: linear-gradient(135deg, #00a651, #06c167) !important;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .order-section {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .section-title {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* 菜單區域樣式 */
+        .category-dropdown {
+            margin-bottom: 15px;
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .category-header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .category-content {
+            display: none;
+            padding: 15px 0;
+            border-left: 3px solid #667eea;
+            margin-left: 10px;
+            padding-left: 15px;
+        }
+
+        .category-content.active {
+            display: block;
+        }
+
+        .dropdown-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-arrow.rotated {
+            transform: rotate(180deg);
+        }
+
+        .beverage-item {
+            background: #f8f9ff;
+            border: 1px solid #e0e6ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .beverage-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+
+        .beverage-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .beverage-name-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .beverage-name-text {
+            flex: 1;
+        }
+        
+        .beverage-price-text {
+            color: #667eea;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .beverage-prices {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .beverage-notes {
+            color: #666;
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+
+        /* 特殊備註顏色 */
+        .beverage-notes.recommended {
+            color: #e74c3c !important;
+            font-weight: 600 !important;
+            background: rgba(231, 76, 60, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.no-toppings {
+            color: #f39c12 !important;
+            font-weight: 600 !important;
+            background: rgba(243, 156, 18, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.no-sugar {
+            color: #27ae60 !important;
+            font-weight: 600 !important;
+            background: rgba(39, 174, 96, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.fixed-options {
+            color: #8e44ad !important;
+            font-weight: 600 !important;
+            background: rgba(142, 68, 173, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.ice-limit {
+            color: #3498db !important;
+            font-weight: 600 !important;
+            background: rgba(52, 152, 219, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.included-toppings {
+            color: #e67e22 !important;
+            font-weight: 600 !important;
+            background: rgba(230, 126, 34, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.no-caffeine {
+            color: #9b59b6 !important;
+            font-weight: 600 !important;
+            background: rgba(155, 89, 182, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.no-tea {
+            color: #1abc9c !important;
+            font-weight: 600 !important;
+            background: rgba(26, 188, 156, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.smoothie {
+            color: #e91e63 !important;
+            font-weight: 600 !important;
+            background: rgba(233, 30, 99, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.limited {
+            color: #d32f2f !important;
+            font-weight: 600 !important;
+            background: rgba(211, 47, 47, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.no-hot {
+            color: #607d8b !important;
+            font-weight: 600 !important;
+            background: rgba(96, 125, 139, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .beverage-notes.golden-ratio {
+            color: #ff9800 !important;
+            font-weight: 600 !important;
+            background: rgba(255, 152, 0, 0.1) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+
+        .star {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* 訂單區域樣式 */
+        .customer-info {
+            margin-bottom: 20px;
+        }
+
+        .info-group {
+            margin-bottom: 15px;
+        }
+
+        .info-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .info-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e6ff;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .info-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .order-item {
+            background: #f0f4ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .order-item-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .order-item-name {
+            flex: 1;
+        }
+        
+        .order-item-price {
+            color: #667eea;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .order-item-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-item-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f0f4ff;
+            border-radius: 15px;
+            padding: 2px;
+        }
+
+        .quantity-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: all 0.2s ease;
+        }
+
+        .quantity-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.1);
+        }
+
+        .quantity-display {
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .total-section {
+            border-top: 2px solid #667eea;
+            padding-top: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .total-amount {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+
+        /* 預覽區域樣式 */
+        .preview-area {
+            background: #f8f9ff;
+            border: 2px solid #e0e6ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            min-height: 200px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            border: 2px solid #ddd;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 模態框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .option-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .option-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #667eea;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-btn:hover, .option-btn.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .quantity-input {
+            margin: 20px 0;
+        }
+
+        .quantity-input input {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1rem;
+            text-align: center;
+            width: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .empty-order {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin: 20px 0;
+        }
+
+        .order-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .order-controls .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .kungfu-tea-ordering .store-info {
+                flex-direction: row !important;
+                gap: 8px !important;
+                text-align: center !important;
+                font-size: 0.7rem !important;
+                flex-wrap: nowrap !important;
+                justify-content: center !important;
+                overflow-x: auto !important;
+            }
+            
+            .kungfu-tea-ordering .store-address {
+                display: none !important;
+            }
+            
+            .kungfu-tea-ordering h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            .kungfu-tea-ordering .nav-link {
+                display: inline-block !important;
+                margin-top: 5px !important;
+                padding: 6px 8px !important;
+                font-size: 0.7rem !important;
+            }
+            
+            .kungfu-tea-ordering .phone-link {
+                padding: 6px 8px !important;
+                font-size: 0.7rem !important;
+            }
+            
+            .kungfu-tea-ordering .delivery-icon {
+                width: 14px;
+                height: 14px;
+                font-size: 9px;
+                line-height: 14px;
+                margin-right: 4px;
+            }
+            
+            .main-content {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* 手機版：菜單區域在第一個 */
+            .main-content .section:nth-child(1) {
+                order: 1;
+            }
+            
+            /* 手機版：訂單區域在第二個 */
+            .main-content .order-section {
+                order: 2;
+            }
+            
+            /* 手機版：訂單預覽在第三個 */
+            .main-content .section:nth-child(3) {
+                order: 3;
+            }
+            
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+            
+            .category-header {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .beverage-item {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .beverage-name-price {
+                font-size: 1rem;
+            }
+            
+            .beverage-name-text {
+                font-size: 1rem;
+            }
+            
+            .beverage-price-text {
+                font-size: 0.9rem;
+            }
+            
+            
+            .beverage-notes {
+                font-size: 0.75rem;
+            }
+            
+            .info-group input {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            
+            .order-item {
+                padding: 12px;
+            }
+            
+            .quantity-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+            }
+            
+            .quantity-controls {
+                gap: 2px;
+                padding: 1px;
+            }
+            
+            .quantity-display {
+                font-size: 0.8rem;
+                padding: 1px 6px;
+            }
+            
+            .order-item-header {
+                flex-direction: row;
+                align-items: center;
+                gap: 5px;
+            }
+            
+            .order-item-details {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .order-item-details .quantity-controls {
+                flex-shrink: 0;
+            }
+            
+            .modal-content {
+                margin: 5% auto;
+                padding: 20px;
+                width: 95%;
+                max-height: 90vh;
+            }
+            
+            .modal-title {
+                font-size: 1.3rem;
+            }
+            
+            .option-buttons {
+                gap: 6px;
+            }
+            
+            .option-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .quantity-input input {
+                width: 70px;
+                padding: 12px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 15px;
+                font-size: 1rem;
+            }
+            
+            .preview-area {
+                font-size: 0.8rem;
+                min-height: 150px;
+                padding: 12px;
+            }
+            
+            .order-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .order-controls .btn {
+                min-width: auto;
+            }
+            
+            .copy-btn {
+                font-size: 1rem;
+                padding: 15px;
+            }
+            
+            .btn-primary {
+                font-size: 1rem;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .section {
+                padding: 12px;
+            }
+            
+            .beverage-item {
+                padding: 10px;
+            }
+            
+            .category-header {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .modal-content {
+                margin: 2% auto;
+                padding: 15px;
+            }
+            
+            .option-buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .option-btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+    <body>
+        <div class="kungfu-tea-ordering">
+            <div class="container">
+        <header>
+            <h1>功夫茶 KUNG FU TEA</h1>
+            <div class="subtitle">點餐文字生成器 v2.0</div>
+            <div class="store-info">
+                <div class="store-address">
+                    📍 楊梅區四維路90號
+                </div>
+                <div class="store-navigation">
+                    <a href="https://foodpanda.go.link/34CwH" target="_blank" class="nav-link delivery-link foodpanda-link">
+                        <span class="delivery-icon foodpanda-icon">🐼</span>foodpanda
+                    </a>
+                    <a href="https://www.ubereats.com/tw/store/%E5%8A%9F%E5%A4%AB%E8%8C%B6-kungfutea-%E6%A5%8A%E6%A2%85%E5%9B%9B%E7%B6%AD%E5%BA%97/zo2ii2cgUcCaK5-5O96-Fw?diningMode=DELIVERY&ps=1&sc=SEARCH_SUGGESTION" target="_blank" class="nav-link delivery-link ubereats-link" style="margin-left: 10px;">
+                        <span class="delivery-icon ubereats-icon">🍽️</span>Uber Eats
+                    </a>
+                    <a href="tel:03-4882975" class="phone-link" style="margin-left: 10px;">
+                        <span class="delivery-icon phone-icon">📞</span>電話：03-4882975
+                    </a>
+                    <a href="https://maps.app.goo.gl/DmhQah32YQhwvBE98" target="_blank" class="nav-link" style="margin-left: 10px;">
+                        🗺️ 導航到四維路90號
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- 菜單區域 -->
+            <div class="section">
+                <h2 class="section-title">菜單</h2>
+                <div id="menu-container"></div>
+            </div>
+
+            <!-- 訂單與訂購資訊合併區域 -->
+            <div class="section order-section">
+                <h2 class="section-title">您的訂單</h2>
+                <div id="order-container">
+                    <div class="empty-order">尚未選擇任何飲品</div>
+                </div>
+                
+                <div class="total-section">
+                    <div class="total-amount">總計: $<span id="total-amount">0</span></div>
+                </div>
+
+                <h3 style="color: #764ba2; margin: 20px 0 15px 0; border-top: 2px solid #e0e6ff; padding-top: 15px;">訂購資訊</h3>
+                <div class="customer-info">
+                    <div class="info-group">
+                        <label for="customer-name">訂購人姓名</label>
+                        <input type="text" id="customer-name" placeholder="請輸入姓名">
+                    </div>
+                    <div class="info-group">
+                        <label for="customer-phone">聯絡電話</label>
+                        <input type="tel" id="customer-phone" placeholder="聯絡電話or公司電話#分機">
+                    </div>
+                    <div class="info-group">
+                        <label for="delivery-address">外送地址</label>
+                        <input type="text" id="delivery-address" placeholder="外送地址+(公司行號)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 預覽區域 -->
+            <div class="section">
+                <h2 class="section-title">請確認以下訂單預覽</h2>
+                <div class="preview-area" id="order-preview">請先填寫訂購資訊和選擇飲品...</div>
+                
+                <div class="order-controls">
+                    <button class="btn btn-secondary" id="save-order">💾 儲存訂單</button>
+                    <button class="btn btn-secondary" id="load-orders">📋 載入訂單</button>
+                    <button class="btn btn-secondary" id="clear-order">🗑️ 清空訂單</button>
+                </div>
+                
+                <button class="copy-btn" id="copy-order" disabled>📋 複製訂單文字</button>
+                <button class="btn btn-primary" id="send-order" disabled>📱 發送功夫茶楊梅四維店官方帳號</button>
+            </div>
+        </div>
+
+        <!-- 實用工具區域 -->
+        <div class="section" style="margin-top: 30px;">
+            <h2 class="section-title">實用工具</h2>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                <a href="https://property-rr6ksz.manus.space" target="_blank" class="nav-link" style="background: linear-gradient(135deg, #4CAF50, #45a049);">
+                    🏠 買賣試算系統
+                </a>
+                <a href="https://lin.ee/HzGBJ8e" target="_blank" class="nav-link" style="background: linear-gradient(135deg, #00C300, #00A000);">
+                    🏠 免費諮詢房地產
+                </a>
+                <a href="https://line.me/ti/g2/VXIuR9NyhkWFQPuMeWTUp_RHitaW82_0r8MU1Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="nav-link" style="background: linear-gradient(135deg, #00C300, #00A000);">
+                    🍽️ 四維商圈餐車群
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 選擇選項的模態框 -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-title">選擇飲品選項</h3>
+            
+            <div class="option-group">
+                <label>尺寸價格</label>
+                <div class="option-buttons" id="size-options"></div>
+            </div>
+
+            <div class="option-group" id="sugar-group">
+                <label>甜度</label>
+                <div class="option-buttons" id="sugar-options">
+                    <div class="option-btn selected" data-value="全糖">全糖</div>
+                    <div class="option-btn" data-value="少糖">少糖</div>
+                    <div class="option-btn" data-value="半糖">半糖</div>
+                    <div class="option-btn" data-value="微糖">微糖</div>
+                    <div class="option-btn" data-value="無糖">無糖</div>
+                </div>
+            </div>
+
+            <div class="option-group" id="ice-group">
+                <label>冰塊</label>
+                <div class="option-buttons" id="ice-options">
+                    <div class="option-btn selected" data-value="正冰">正冰</div>
+                    <div class="option-btn" data-value="少冰">少冰</div>
+                    <div class="option-btn" data-value="微冰">微冰</div>
+                    <div class="option-btn" data-value="去冰">去冰</div>
+                    <div class="option-btn" data-value="熱飲">熱飲</div>
+                </div>
+            </div>
+
+            <div class="option-group" id="toppings-group" style="display: none;">
+                <label>加料選擇</label>
+                <div class="option-buttons" id="toppings-options"></div>
+            </div>
+            
+            <div class="quantity-input">
+                <label for="quantity">數量: </label>
+                <input type="number" id="quantity" min="1" value="1" pattern="[0-9]*" inputmode="numeric">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-primary" id="add-to-order">加入訂單</button>
+                <button class="btn btn-secondary" id="cancel-order">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加料選項資料
+        const toppings = [
+            {name: "黑糖波霸", price: 10, displayName: "波霸"},
+            {name: "仙草", price: 10, displayName: "仙草"},
+            {name: "寒天球", price: 10, displayName: "寒天球"},
+            {name: "蒟蒻", price: 10, displayName: "蒟蒻"},
+            {name: "愛玉", price: 10, displayName: "愛玉"},
+            {name: "38料粉條", price: 10, displayName: "38料粉條"}
+        ];
+
+        // 飲品資料
+        const menuData = [
+            // 功夫・好友茶
+            {name: "功夫茶王", category: "功夫・好友茶", prices: {'L': 45}, notes: "★ 無糖微冰限定, 不可加料", fixedOptions: {sugar: "無糖", ice: "微冰"}, canAddToppings: false},
+            {name: "岩葉紅茶", category: "功夫・好友茶", prices: {'L': 35, '瓶': 55}, canAddToppings: true},
+            {name: "翠玉綠茶", category: "功夫・好友茶", prices: {'L': 35, '瓶': 55}, canAddToppings: true},
+            {name: "四季春青茶", category: "功夫・好友茶", prices: {'L': 35, '瓶': 55}, canAddToppings: true},
+            {name: "烏龍觀音", category: "功夫・好友茶", prices: {'L': 35, '瓶': 55}, canAddToppings: true},
+            {name: "蜜桃胭脂紅茶", category: "功夫・好友茶", prices: {'L': 40, '瓶': 60}, canAddToppings: true},
+            {name: "手作冬瓜茶", category: "功夫・好友茶", prices: {'L': 35}, notes: "無另外加糖", noSugarOptions: true, canAddToppings: true},
+            {name: "阿里山冰茶", category: "功夫・好友茶", prices: {'L': 50}, notes: "推薦, 不可加料, 不可做熱飲", canAddToppings: false},
+            {name: "日月潭紅玉", category: "功夫・好友茶", prices: {'L': 50}, notes: "推薦, 不可加料, 不可做熱飲", canAddToppings: false},
+
+            // 特調系列
+            {name: "芝士奶蓋綠茶/青茶", category: "特調", prices: {'L': 70}, canAddToppings: true},
+            {name: "芝士奶蓋紅茶/烏龍", category: "特調", prices: {'L': 70}, canAddToppings: true},
+            {name: "玫瑰冰茶", category: "特調", prices: {'L': 55}, notes: "無另外加糖", noSugarOptions: true, canAddToppings: true},
+            {name: "青梅綠茶", category: "特調", prices: {'L': 55}, canAddToppings: true},
+            {name: "多多綠茶", category: "特調", prices: {'L': 60}, canAddToppings: true},
+            {name: "胭脂多多", category: "特調", prices: {'L': 60}, canAddToppings: true},
+            {name: "粉粿胭脂紅", category: "特調", prices: {'L': 50}, canAddToppings: true},
+            {name: "冰淇淋岩葉紅茶", category: "特調", prices: {'L': 60}, notes: "最低微冰", canAddToppings: true},
+
+            // 功夫・鮮奶
+            {name: "黑糖波霸鮮奶", category: "功夫・鮮奶", prices: {'M': 65, 'L': 80}, notes: "無另外加糖", noSugarOptions: true, canAddToppings: true},
+            {name: "紅豆粉粿鮮奶", category: "功夫・鮮奶", prices: {'M': 65, 'L': 80}, notes: "★ 黃金比例", fixedOptions: {sugar: "黃金比例"}, canAddToppings: false},
+            {name: "巧克力鮮奶", category: "功夫・鮮奶", prices: {'L': 75}, canAddToppings: true},
+            {name: "岩葉紅茶拿鐵", category: "功夫・鮮奶", prices: {'M': 55, 'L': 65}, canAddToppings: true},
+            {name: "烏龍觀音拿鐵", category: "功夫・鮮奶", prices: {'M': 55, 'L': 65}, canAddToppings: true},
+            {name: "英式伯爵拿鐵", category: "功夫・鮮奶", prices: {'L': 70}, canAddToppings: true},
+            {name: "蜜桃胭脂拿鐵", category: "功夫・鮮奶", prices: {'L': 70}, canAddToppings: true},
+            {name: "冰淇淋紅茶拿鐵", category: "功夫・鮮奶", prices: {'L': 75}, notes: "最低微冰", canAddToppings: true},
+
+            // 功夫・奶茶
+            {name: "38奶霸", category: "功夫・奶茶", prices: {'M': 60, 'L': 65}, notes: "★ 含波霸+蒟蒻+仙草", canAddToppings: false},
+            {name: "黑糖波霸奶茶", category: "功夫・奶茶", prices: {'M': 55, 'L': 60}, notes: "★", canAddToppings: true},
+            {name: "咖啡凍奶茶", category: "功夫・奶茶", prices: {'M': 60, 'L': 65}, canAddToppings: true},
+            {name: "厚奶茶/奶綠", category: "功夫・奶茶", prices: {'M': 50, 'L': 55}, canAddToppings: true},
+            {name: "烏龍觀音奶茶", category: "功夫・奶茶", prices: {'M': 50, 'L': 55}, canAddToppings: true},
+            {name: "英式伯爵奶茶", category: "功夫・奶茶", prices: {'L': 65}, canAddToppings: true},
+            {name: "蜜桃胭脂奶茶", category: "功夫・奶茶", prices: {'L': 65}, canAddToppings: true},
+            {name: "莊園玫瑰奶茶", category: "功夫・奶茶", prices: {'L': 65}, canAddToppings: true},
+            {name: "巧克力奶茶", category: "功夫・奶茶", prices: {'L': 65}, canAddToppings: true},
+
+            // 期間・限定
+            {name: "星桃樂胭脂", category: "期間・限定", prices: {'單一價': 75}, canAddToppings: true},
+
+            // 功夫・水果
+            {name: "輕飲水果茶王", category: "功夫・水果", prices: {'L': 65}, notes: "★ 推薦", canAddToppings: true},
+            {name: "寒天柚香飲", category: "功夫・水果", prices: {'L': 65}, canAddToppings: true},
+            {name: "粉裸柚香綠", category: "功夫・水果", prices: {'L': 65}, canAddToppings: true},
+            {name: "鮮榨柳橙綠", category: "功夫・水果", prices: {'L': 65}, notes: "推薦, 甜度固定", fixedOptions: {sugar: "甜度固定"}, canAddToppings: true},
+            {name: "芭樂檸檬綠", category: "功夫・水果", prices: {'L': 70}, notes: "★ 固定半糖微冰", fixedOptions: {sugar: "半糖", ice: "微冰"}, canAddToppings: true},
+            {name: "黃金芒果綠", category: "功夫・水果", prices: {'L': 60}, canAddToppings: true},
+            {name: "百香3Q", category: "功夫・水果", prices: {'L': 60}, notes: "不含咖啡因, 含波霸+蒟蒻+椰果", canAddToppings: false},
+            {name: "百香羅勒子", category: "功夫・水果", prices: {'L': 55}, notes: "不含茶", canAddToppings: true},
+            {name: "冬瓜檸檬", category: "功夫・水果", prices: {'L': 55}, notes: "不含另外加糖", noSugarOptions: true, canAddToppings: true},
+            {name: "黃金芒果莎莎", category: "功夫・水果", prices: {'L': 60}, notes: "★ 冰沙", fixedOptions: {sugar: "", ice: "冰沙"}, noSugarOptions: true, canAddToppings: false},
+            {name: "泰式榴槤莎莎", category: "功夫・水果", prices: {'L': 110}, notes: "★ 熱銷限定, 冰沙", fixedOptions: {sugar: "", ice: "冰沙"}, noSugarOptions: true, canAddToppings: false},
+        ];
+
+        // 全域變數
+        let currentOrder = [];
+        let currentBeverage = null;
+        let savedOrders = JSON.parse(localStorage.getItem('kungfuTeaOrders') || '[]');
+
+        // DOM 元素
+        const menuContainer = document.getElementById('menu-container');
+        const orderContainer = document.getElementById('order-container');
+        const totalAmountEl = document.getElementById('total-amount');
+        const orderPreview = document.getElementById('order-preview');
+        const copyOrderBtn = document.getElementById('copy-order');
+        const sendOrderBtn = document.getElementById('send-order');
+        const clearOrderBtn = document.getElementById('clear-order');
+        const saveOrderBtn = document.getElementById('save-order');
+        const loadOrdersBtn = document.getElementById('load-orders');
+        const modal = document.getElementById('order-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const sizeOptions = document.getElementById('size-options');
+        const quantityInput = document.getElementById('quantity');
+        const addToOrderBtn = document.getElementById('add-to-order');
+        const cancelOrderBtn = document.getElementById('cancel-order');
+
+        // 訂購資訊輸入框
+        const customerName = document.getElementById('customer-name');
+        const customerPhone = document.getElementById('customer-phone');
+        const deliveryAddress = document.getElementById('delivery-address');
+
+        // 初始化菜單
+        function initMenu() {
+            const categories = [...new Set(menuData.map(item => item.category))];
+            
+            categories.forEach(category => {
+                const categoryDropdown = document.createElement('div');
+                categoryDropdown.className = 'category-dropdown';
+
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.innerHTML = `
+                    ${category}
+                    <span class="dropdown-arrow">▼</span>
+                `;
+
+                const categoryContent = document.createElement('div');
+                categoryContent.className = 'category-content';
+
+                // 創建該分類下的飲品
+                const categoryItems = menuData.filter(item => item.category === category);
+                categoryItems.forEach(beverage => {
+                    const beverageEl = createBeverageElement(beverage);
+                    categoryContent.appendChild(beverageEl);
+                });
+
+                // 點擊標題切換展開/收起
+                categoryHeader.addEventListener('click', () => {
+                    const arrow = categoryHeader.querySelector('.dropdown-arrow');
+                    const isActive = categoryContent.classList.contains('active');
+                    
+                    if (isActive) {
+                        categoryContent.classList.remove('active');
+                        arrow.classList.remove('rotated');
+                    } else {
+                        categoryContent.classList.add('active');
+                        arrow.classList.add('rotated');
+                    }
+                });
+
+                categoryDropdown.appendChild(categoryHeader);
+                categoryDropdown.appendChild(categoryContent);
+                menuContainer.appendChild(categoryDropdown);
+            });
+        }
+
+        // 創建飲品元素
+        function createBeverageElement(beverage) {
+            const beverageEl = document.createElement('div');
+            beverageEl.className = 'beverage-item';
+            beverageEl.onclick = () => openOrderModal(beverage);
+
+            const pricesText = Object.entries(beverage.prices)
+                .map(([size, price]) => `${size} $${price}`)
+                .join(' / ');
+
+            let notesHtml = '';
+            if (beverage.notes) {
+                // 移除備註中的星星圖示，因為已經移到名稱前面
+                const cleanNotes = beverage.notes.replace(/★\s*/g, '');
+                if (cleanNotes.trim()) {
+                    // 根據備註內容決定樣式類別
+                    let noteClass = 'beverage-notes';
+                    if (cleanNotes.includes('推薦')) {
+                        noteClass += ' recommended';
+                    } else if (cleanNotes.includes('不可加料')) {
+                        noteClass += ' no-toppings';
+                    } else if (cleanNotes.includes('無另外加糖') || cleanNotes.includes('無糖')) {
+                        noteClass += ' no-sugar';
+                    } else if (cleanNotes.includes('甜度固定') || cleanNotes.includes('固定')) {
+                        noteClass += ' fixed-options';
+                    } else if (cleanNotes.includes('最低微冰')) {
+                        noteClass += ' ice-limit';
+                    } else if (cleanNotes.includes('含') && (cleanNotes.includes('波霸') || cleanNotes.includes('蒟蒻') || cleanNotes.includes('仙草'))) {
+                        noteClass += ' included-toppings';
+                    } else if (cleanNotes.includes('不含咖啡因')) {
+                        noteClass += ' no-caffeine';
+                    } else if (cleanNotes.includes('不含茶')) {
+                        noteClass += ' no-tea';
+                    } else if (cleanNotes.includes('冰沙')) {
+                        noteClass += ' smoothie';
+                    } else if (cleanNotes.includes('限定')) {
+                        noteClass += ' limited';
+                    } else if (cleanNotes.includes('不可做熱飲')) {
+                        noteClass += ' no-hot';
+                    } else if (cleanNotes.includes('黃金比例')) {
+                        noteClass += ' golden-ratio';
+                    }
+                    
+                    notesHtml = `<div class="${noteClass}">${cleanNotes}</div>`;
+                }
+            }
+
+            // 處理星星圖示
+            let displayName = beverage.name;
+            if (beverage.notes && beverage.notes.includes('★')) {
+                displayName = `<span class="star">★</span> ${beverage.name}`;
+            }
+
+        beverageEl.innerHTML = `
+            <div class="beverage-name-price">
+                <div class="beverage-name-text">${displayName}</div>
+                <div class="beverage-price-text">${pricesText}</div>
+            </div>
+            ${notesHtml}
+        `;
+
+            return beverageEl;
+        }
+
+        // 檢查訂購資訊是否完整
+        function checkOrderInfo() {
+            const name = customerName.value.trim();
+            const phone = customerPhone.value.trim();
+            const address = deliveryAddress.value.trim();
+            
+            if (!name || !phone || !address) {
+                // 滾動到訂購資訊區域
+                const orderInfoSection = document.querySelector('.order-section');
+                orderInfoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // 高亮顯示未填寫的欄位
+                if (!name) {
+                    customerName.style.borderColor = '#ff6b6b';
+                    customerName.focus();
+                } else if (!phone) {
+                    customerPhone.style.borderColor = '#ff6b6b';
+                    customerPhone.focus();
+                } else if (!address) {
+                    deliveryAddress.style.borderColor = '#ff6b6b';
+                    deliveryAddress.focus();
+                }
+                
+                alert('請先填寫完整的訂購資訊（姓名、電話、地址）後再選擇飲品！');
+                return false;
+            }
+            return true;
+        }
+
+        // 打開訂購模態框
+        function openOrderModal(beverage) {
+            // 先檢查訂購資訊
+            if (!checkOrderInfo()) {
+                return;
+            }
+            
+            currentBeverage = beverage;
+            modalTitle.textContent = beverage.name;
+            
+            // 創建尺寸選項
+            sizeOptions.innerHTML = '';
+            const sizes = Object.keys(beverage.prices);
+            
+            sizes.forEach((size, index) => {
+                const sizeBtn = document.createElement('div');
+                sizeBtn.className = 'option-btn';
+                if (index === 0) sizeBtn.classList.add('selected');
+                sizeBtn.textContent = `${size} (${beverage.prices[size]})`;
+                sizeBtn.onclick = () => selectOption(sizeBtn, 'size');
+                sizeOptions.appendChild(sizeBtn);
+            });
+
+            // 處理甜度選項
+            const sugarGroup = document.getElementById('sugar-group');
+            if (beverage.fixedOptions?.sugar || beverage.noSugarOptions) {
+                sugarGroup.style.display = 'none';
+            } else {
+                sugarGroup.style.display = 'block';
+                resetSugarSelections();
+            }
+
+            // 處理冰塊選項
+            const iceGroup = document.getElementById('ice-group');
+            if (beverage.fixedOptions?.ice) {
+                iceGroup.style.display = 'none';
+            } else {
+                iceGroup.style.display = 'block';
+                // 特殊處理：冰淇淋飲品只顯示微冰以上選項
+                if (beverage.name === '冰淇淋岩葉紅茶' || beverage.name === '冰淇淋紅茶拿鐵') {
+                    resetIceSelectionsForIceCream();
+                } else if (beverage.name === '阿里山冰茶' || beverage.name === '日月潭紅玉') {
+                    resetIceSelectionsNoHot();
+                } else if (beverage.name === '紅豆粉粿鮮奶') {
+                    resetIceSelectionsForRedBean();
+                } else {
+                    resetIceSelections();
+                }
+            }
+
+            // 處理加料選項
+            const toppingsGroup = document.getElementById('toppings-group');
+            if (beverage.canAddToppings) {
+                toppingsGroup.style.display = 'block';
+                createToppingsOptions();
+            } else {
+                toppingsGroup.style.display = 'none';
+            }
+
+            quantityInput.value = 1;
+            modal.style.display = 'block';
+        }
+
+        // 創建加料選項
+        function createToppingsOptions() {
+            const toppingsContainer = document.getElementById('toppings-options');
+            toppingsContainer.innerHTML = '';
+            
+            toppings.forEach(topping => {
+                const toppingBtn = document.createElement('div');
+                toppingBtn.className = 'option-btn';
+                toppingBtn.textContent = `${topping.name} (+${topping.price})`;
+                toppingBtn.dataset.toppingName = topping.name;
+                toppingBtn.dataset.toppingPrice = topping.price;
+                toppingBtn.onclick = () => toggleTopping(toppingBtn);
+                toppingsContainer.appendChild(toppingBtn);
+            });
+        }
+
+        // 切換加料選擇
+        function toggleTopping(btn) {
+            const isSelected = btn.classList.contains('selected');
+            const toppingName = btn.dataset.toppingName;
+            const selectedToppings = document.querySelectorAll('#toppings-options .option-btn.selected');
+            
+            // 如果點擊的是38料粉條
+            if (toppingName === '38料粉條') {
+                if (isSelected) {
+                    // 取消選擇38料粉條
+                    btn.classList.remove('selected');
+                } else {
+                    // 選擇38料粉條時，取消所有其他加料
+                    selectedToppings.forEach(otherBtn => otherBtn.classList.remove('selected'));
+                    btn.classList.add('selected');
+                }
+            } else {
+                // 如果點擊的是其他加料
+                if (isSelected) {
+                    // 取消選擇
+                    btn.classList.remove('selected');
+                } else {
+                    // 檢查是否已經選了38料粉條
+                    const specialTopping = document.querySelector('#toppings-options .option-btn[data-topping-name="38料粉條"]');
+                    if (specialTopping && specialTopping.classList.contains('selected')) {
+                        alert('選擇38料粉條時不能同時選擇其他加料！');
+                        return;
+                    }
+                    
+                    // 檢查是否已達到3種加料的限制
+                    if (selectedToppings.length >= 3) {
+                        alert('一杯飲料最多只能加3種料！');
+                        return;
+                    }
+                    
+                    btn.classList.add('selected');
+                }
+            }
+        }
+
+        // 選擇選項 (尺寸、甜度、冰塊)
+        function selectOption(btn, type) {
+            const parentContainer = btn.parentNode;
+            parentContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        // 重置甜度選項
+        function resetSugarSelections() {
+            document.querySelectorAll('#sugar-options .option-btn').forEach((btn, index) => {
+                btn.classList.toggle('selected', index === 0);
+            });
+        }
+
+        // 重置冰塊選項
+        function resetIceSelections() {
+            document.querySelectorAll('#ice-options .option-btn').forEach((btn, index) => {
+                btn.style.display = 'block'; // 確保所有選項都顯示
+                btn.classList.toggle('selected', index === 0);
+            });
+        }
+
+        // 重置冰淇淋飲品的冰塊選項（只顯示微冰以上）
+        function resetIceSelectionsForIceCream() {
+            const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+            iceOptions.forEach((btn, index) => {
+                const value = btn.dataset.value;
+                // 只顯示微冰、少冰、正冰，隱藏去冰和熱飲
+                if (value === '去冰' || value === '熱飲') {
+                    btn.style.display = 'none';
+                } else {
+                    btn.style.display = 'block';
+                    btn.classList.toggle('selected', index === 0);
+                }
+            });
+        }
+
+        // 重置不能做熱飲的飲品冰塊選項（隱藏熱飲選項）
+        function resetIceSelectionsNoHot() {
+            const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+            iceOptions.forEach((btn, index) => {
+                const value = btn.dataset.value;
+                // 隱藏熱飲選項，其他都顯示
+                if (value === '熱飲') {
+                    btn.style.display = 'none';
+                } else {
+                    btn.style.display = 'block';
+                    btn.classList.toggle('selected', index === 0);
+                }
+            });
+        }
+
+        // 重置紅豆粉粿鮮奶的冰塊選項（只顯示正冰和熱飲）
+        function resetIceSelectionsForRedBean() {
+            const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+            iceOptions.forEach((btn, index) => {
+                const value = btn.dataset.value;
+                // 只顯示正冰和熱飲，隱藏少冰、微冰、去冰
+                if (value === '正冰' || value === '熱飲') {
+                    btn.style.display = 'block';
+                    btn.classList.toggle('selected', value === '正冰');
+                } else {
+                    btn.style.display = 'none';
+                }
+            });
+        }
+
+        // 加入訂單
+        addToOrderBtn.onclick = () => {
+            const selectedSizeBtn = document.querySelector('#size-options .option-btn.selected');
+            const sizeText = selectedSizeBtn.textContent;
+            const size = sizeText.split(' ')[0];
+            const quantity = parseInt(quantityInput.value);
+
+            if (quantity <= 0) {
+                alert('數量必須大於 0');
+                return;
+            }
+
+        // 處理甜度選項
+        let sugar = "全糖";
+        if (currentBeverage.fixedOptions?.sugar) {
+            sugar = currentBeverage.fixedOptions.sugar;
+        } else if (currentBeverage.noSugarOptions) {
+            sugar = ""; // 不顯示甜度
+        } else {
+            const selectedSugarBtn = document.querySelector('#sugar-options .option-btn.selected');
+            if (selectedSugarBtn) {
+                sugar = selectedSugarBtn.dataset.value;
+            }
+        }
+
+            // 處理冰塊選項
+            let ice = "正冰";
+            if (currentBeverage.fixedOptions?.ice) {
+                ice = currentBeverage.fixedOptions.ice;
+            } else {
+                const selectedIceBtn = document.querySelector('#ice-options .option-btn.selected');
+                if (selectedIceBtn) {
+                    ice = selectedIceBtn.dataset.value;
+                }
+            }
+
+            // 處理加料選項
+            const selectedToppings = [];
+            let toppingsPrice = 0;
+            if (currentBeverage.canAddToppings) {
+                document.querySelectorAll('#toppings-options .option-btn.selected').forEach(btn => {
+                    const toppingName = btn.dataset.toppingName;
+                    const toppingPrice = parseInt(btn.dataset.toppingPrice);
+                    selectedToppings.push(toppingName);
+                    toppingsPrice += toppingPrice;
+                });
+            }
+
+            const basePrice = currentBeverage.prices[size];
+            const totalPrice = (basePrice + toppingsPrice) * quantity;
+
+            const orderItem = {
+                beverage: currentBeverage,
+                size: size,
+                sugar: sugar,
+                ice: ice,
+                toppings: selectedToppings,
+                quantity: quantity,
+                price: totalPrice
+            };
+
+            currentOrder.push(orderItem);
+            updateOrderDisplay();
+            updateOrderPreview();
+            modal.style.display = 'none';
+        };
+
+        // 取消訂購
+        cancelOrderBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        // 更新訂單顯示
+        function updateOrderDisplay() {
+            if (currentOrder.length === 0) {
+                orderContainer.innerHTML = '<div class="empty-order">尚未選擇任何飲品</div>';
+            } else {
+                orderContainer.innerHTML = '';
+                currentOrder.forEach((item, index) => {
+                    const orderItemEl = createOrderItemElement(item, index);
+                    orderContainer.appendChild(orderItemEl);
+                });
+            }
+
+            // 更新總金額
+            const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+            totalAmountEl.textContent = total;
+        }
+
+        // 創建訂單項目元素
+        function createOrderItemElement(item, index) {
+            const orderItemEl = document.createElement('div');
+            orderItemEl.className = 'order-item';
+
+            // 組合甜度冰塊文字
+            let optionsText = '';
+            if (item.sugar && item.ice) {
+                optionsText = `${item.sugar} / ${item.ice}`;
+            } else if (item.sugar) {
+                optionsText = item.sugar;
+            } else if (item.ice) {
+                optionsText = item.ice;
+            }
+
+            // 加料文字
+            let toppingsText = '';
+            if (item.toppings && item.toppings.length > 0) {
+                const displayToppings = item.toppings.map(toppingName => {
+                    const topping = toppings.find(t => t.name === toppingName);
+                    return topping ? topping.displayName : toppingName;
+                });
+                toppingsText = `<div style="color: #667eea; font-size: 0.8rem;">加料: ${displayToppings.join(', ')}</div>`;
+            }
+
+            orderItemEl.innerHTML = `
+                <div class="order-item-header">
+                    <span class="order-item-name">${item.beverage.name} (${item.size})</span>
+                    <span class="order-item-price">$${item.price}</span>
+                </div>
+                <div class="order-item-details">
+                    <span>${optionsText}</span>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity(${index}, -1)">−</button>
+                        <span class="quantity-display">${item.quantity}</span>
+                        <button class="quantity-btn" onclick="changeQuantity(${index}, 1)">+</button>
+                    </div>
+                </div>
+                ${toppingsText}
+            `;
+
+            return orderItemEl;
+        }
+
+        // 改變數量
+        function changeQuantity(index, change) {
+            const item = currentOrder[index];
+            item.quantity += change;
+
+            if (item.quantity <= 0) {
+                currentOrder.splice(index, 1);
+            } else {
+                // 重新計算價格
+                const basePrice = item.beverage.prices[item.size];
+                let toppingsPrice = 0;
+                if (item.toppings) {
+                    item.toppings.forEach(toppingName => {
+                        const topping = toppings.find(t => t.name === toppingName);
+                        if (topping) {
+                            toppingsPrice += topping.price;
+                        }
+                    });
+                }
+                item.price = (basePrice + toppingsPrice) * item.quantity;
+            }
+
+            updateOrderDisplay();
+            updateOrderPreview();
+        }
+
+        // 更新訂單預覽
+        function updateOrderPreview() {
+            const name = customerName.value.trim();
+            const phone = customerPhone.value.trim();
+            const address = deliveryAddress.value.trim();
+            
+            if (!name || !phone || !address || currentOrder.length === 0) {
+                orderPreview.textContent = '請先填寫完整的訂購資訊和選擇飲品...';
+                copyOrderBtn.disabled = true;
+                sendOrderBtn.disabled = true;
+                return;
+            }
+
+            const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+            const orderTime = new Date().toLocaleString('zh-TW');
+
+            let previewText = `🧋 功夫茶 KUNG FU TEA 訂單\n`;
+            previewText += `================\n`;
+            previewText += `📅 訂購時間：${orderTime}\n`;
+            previewText += `👤 訂購人：${name}\n`;
+            previewText += `📞 聯絡電話：${phone}\n`;
+            previewText += `📍 外送地址：${address}\n`;
+            previewText += `================\n`;
+            previewText += `📋 訂購內容：\n\n`;
+
+            currentOrder.forEach((item, index) => {
+                let orderLine = `${index + 1}. ${item.beverage.name} ${item.size}`;
+                
+                // 添加甜度冰塊資訊
+                if (item.ice && item.sugar) {
+                    orderLine += ` ${item.ice}${item.sugar}`;
+                } else if (item.ice) {
+                    orderLine += ` ${item.ice}`;
+                } else if (item.sugar) {
+                    orderLine += ` ${item.sugar}`;
+                }
+                
+                // 添加加料資訊
+                if (item.toppings && item.toppings.length > 0) {
+                    const displayToppings = item.toppings.map(toppingName => {
+                        const topping = toppings.find(t => t.name === toppingName);
+                        return topping ? topping.displayName : toppingName;
+                    });
+                    orderLine += ` +${displayToppings.join('+')}`;
+                }
+                
+                orderLine += ` ×${item.quantity} 計：${item.price}`;
+                previewText += orderLine + '\n';
+            });
+
+            previewText += `\n================\n`;
+            previewText += `💰 總金額：${total}\n`;
+            previewText += `================\n`;
+            previewText += `\n謝謝您的訂購！🙏`;
+
+            orderPreview.textContent = previewText;
+            copyOrderBtn.disabled = false;
+            sendOrderBtn.disabled = false;
+        }
+
+        // 複製訂單文字
+        copyOrderBtn.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(orderPreview.textContent);
+                copyOrderBtn.textContent = '✅ 已複製！';
+                setTimeout(() => {
+                    copyOrderBtn.textContent = '📋 複製訂單文字';
+                }, 2000);
+            } catch (err) {
+                // 備用複製方法
+                const textArea = document.createElement('textarea');
+                textArea.value = orderPreview.textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyOrderBtn.textContent = '✅ 已複製！';
+                setTimeout(() => {
+                    copyOrderBtn.textContent = '📋 複製訂單文字';
+                }, 2000);
+            }
+        };
+
+        // 發送給店家
+        sendOrderBtn.onclick = () => {
+            const orderText = encodeURIComponent(orderPreview.textContent);
+            const lineUrl = `https://lin.ee/QmyIa34?text=${orderText}`;
+            window.open(lineUrl, '_blank');
+        };
+
+        // 儲存訂單
+        saveOrderBtn.onclick = () => {
+            if (currentOrder.length === 0) {
+                alert('訂單是空的，無法儲存！');
+                return;
+            }
+
+            const name = customerName.value.trim();
+            const phone = customerPhone.value.trim();
+            const address = deliveryAddress.value.trim();
+            
+            if (!name || !phone || !address) {
+                alert('請先填寫完整的訂購資訊！');
+                return;
+            }
+
+            const orderData = {
+                id: Date.now(),
+                name: name,
+                phone: phone,
+                address: address,
+                items: [...currentOrder],
+                total: currentOrder.reduce((sum, item) => sum + item.price, 0),
+                saveTime: new Date().toLocaleString('zh-TW')
+            };
+
+            // 檢查是否超過10個訂單
+            if (savedOrders.length >= 10) {
+                if (confirm('已儲存10個訂單，是否要覆蓋最舊的訂單？')) {
+                    savedOrders.shift(); // 移除最舊的訂單
+                } else {
+                    return;
+                }
+            }
+
+            savedOrders.push(orderData);
+            localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+            
+            alert(`訂單已儲存！\n訂單編號: ${orderData.id}\n儲存時間: ${orderData.saveTime}`);
+            updateLoadOrdersButton();
+        };
+
+        // 載入訂單列表
+        loadOrdersBtn.onclick = () => {
+            if (savedOrders.length === 0) {
+                alert('沒有儲存的訂單！');
+                return;
+            }
+
+            // 創建訂單選擇模態框
+            const orderModal = document.createElement('div');
+            orderModal.className = 'modal';
+            orderModal.style.display = 'block';
+            orderModal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <h3 class="modal-title">選擇要載入的訂單</h3>
+                    <div class="orders-list" style="max-height: 400px; overflow-y: auto;">
+                        ${savedOrders.map((order, index) => `
+                            <div class="order-item-select" data-order-id="${order.id}">
+                                <div class="order-item-header">
+                                    <span>訂單 #${order.id}</span>
+                                    <span class="price">$${order.total}</span>
+                                </div>
+                                <div class="order-item-details">
+                                    <div>
+                                        <strong>${order.name}</strong><br>
+                                        📞 ${order.phone}<br>
+                                        📍 ${order.address}
+                                    </div>
+                                    <div class="order-actions">
+                                        <button class="btn btn-primary load-order-btn" data-order-id="${order.id}">載入</button>
+                                        <button class="btn btn-secondary delete-order-btn" data-order-id="${order.id}">刪除</button>
+                                    </div>
+                                </div>
+                                <div style="color: #666; font-size: 0.8rem; margin-top: 5px;">
+                                    儲存時間: ${order.saveTime}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="btn btn-secondary" id="clear-all-orders">清空所有訂單</button>
+                        <button class="btn btn-secondary" id="close-orders-modal">關閉</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(orderModal);
+
+            // 添加樣式
+            const style = document.createElement('style');
+            style.textContent = `
+                .order-item-select {
+                    background: #f8f9ff;
+                    border: 1px solid #e0e6ff;
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                .order-item-select:hover {
+                    border-color: #667eea;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+                }
+                .order-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .order-actions .btn {
+                    padding: 8px 12px;
+                    font-size: 0.9rem;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 載入訂單
+            orderModal.querySelectorAll('.load-order-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const orderId = parseInt(btn.dataset.orderId);
+                    const order = savedOrders.find(order => order.id === orderId);
+                    if (order) {
+                        customerName.value = order.name;
+                        customerPhone.value = order.phone;
+                        deliveryAddress.value = order.address;
+                        currentOrder = [...order.items];
+                        updateOrderDisplay();
+                        updateOrderPreview();
+                        document.body.removeChild(orderModal);
+                        document.head.removeChild(style);
+                        alert('訂單已載入！');
+                    }
+                };
+            });
+
+            // 刪除訂單
+            orderModal.querySelectorAll('.delete-order-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('確定要刪除這個訂單嗎？')) {
+                        const orderId = parseInt(btn.dataset.orderId);
+                        const orderIndex = savedOrders.findIndex(order => order.id === orderId);
+                        if (orderIndex !== -1) {
+                            savedOrders.splice(orderIndex, 1);
+                            localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+                            // 重新載入模態框
+                            document.body.removeChild(orderModal);
+                            document.head.removeChild(style);
+                            loadOrdersBtn.click();
+                        }
+                    }
+                };
+            });
+
+            // 清空所有訂單
+            orderModal.querySelector('#clear-all-orders').onclick = () => {
+                if (confirm('確定要清空所有儲存的訂單嗎？')) {
+                    savedOrders = [];
+                    localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+                    document.body.removeChild(orderModal);
+                    document.head.removeChild(style);
+                    updateLoadOrdersButton();
+                    alert('所有訂單已清空！');
+                }
+            };
+
+            // 關閉模態框
+            orderModal.querySelector('#close-orders-modal').onclick = () => {
+                document.body.removeChild(orderModal);
+                document.head.removeChild(style);
+            };
+
+            // 點擊模態框外部關閉
+            orderModal.onclick = (e) => {
+                if (e.target === orderModal) {
+                    document.body.removeChild(orderModal);
+                    document.head.removeChild(style);
+                }
+            };
+        };
+
+        // 更新載入訂單按鈕文字
+        function updateLoadOrdersButton() {
+            loadOrdersBtn.textContent = `📋 載入訂單 (${savedOrders.length}/10)`;
+        }
+
+        // 清空訂單
+        clearOrderBtn.onclick = () => {
+            if (currentOrder.length === 0) return;
+            
+            if (confirm('確定要清空所有訂單項目嗎？')) {
+                currentOrder = [];
+                updateOrderDisplay();
+                updateOrderPreview();
+            }
+        };
+
+        // 監聽訂購資訊輸入變化
+        [customerName, customerPhone, deliveryAddress].forEach(input => {
+            input.addEventListener('input', function() {
+                // 清除高亮效果
+                this.style.borderColor = '#e0e6ff';
+                updateOrderPreview();
+            });
+        });
+
+        // 限制數量輸入框只能輸入數字
+        quantityInput.addEventListener('input', function(e) {
+            // 移除所有非數字字符
+            this.value = this.value.replace(/[^0-9]/g, '');
+            // 確保最小值為1
+            if (this.value < 1) {
+                this.value = 1;
+            }
+        });
+
+        // 防止粘貼非數字內容
+        quantityInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/[^0-9]/g, '');
+            if (numbers) {
+                this.value = Math.max(1, parseInt(numbers) || 1);
+            }
+        });
+
+        // 點擊模態框外部關閉
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // 設置選項按鈕點擊事件
+        document.addEventListener('DOMContentLoaded', () => {
+            // 甜度選項
+            document.querySelectorAll('#sugar-options .option-btn').forEach(btn => {
+                btn.onclick = () => selectOption(btn, 'sugar');
+            });
+
+            // 冰塊選項
+            document.querySelectorAll('#ice-options .option-btn').forEach(btn => {
+                btn.onclick = () => selectOption(btn, 'ice');
+            });
+        });
+
+        // 初始化應用
+        initMenu();
+        updateOrderDisplay();
+        updateOrderPreview();
+        updateLoadOrdersButton();
+    </script>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,303 @@
+一<!DOCTYPE html>
+<html lang="zh-TW">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>版本管理工具 v2.1.0</title>
+    <style>
+      body {
+        font-family: 'Arial', '微軟正黑體', sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .version-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 10px;
+      }
+
+      .version-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .version-card {
+        background: #f8f9ff;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+      }
+
+      .version-card h3 {
+        color: #667eea;
+        margin-bottom: 10px;
+      }
+
+      .version-list {
+        background: #f8f9ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .version-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        margin: 5px 0;
+        background: white;
+        border-radius: 5px;
+        border-left: 3px solid #667eea;
+      }
+
+      .version-number {
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .version-date {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .version-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+      }
+
+      .btn-success {
+        background: #28a745;
+      }
+
+      .btn-warning {
+        background: #ffc107;
+        color: #333;
+      }
+
+      .btn-danger {
+        background: #dc3545;
+      }
+
+      .current-version {
+        background: linear-gradient(135deg, #28a745, #20c997) !important;
+        color: white !important;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-stable {
+        background: #28a745;
+      }
+
+      .status-beta {
+        background: #ffc107;
+      }
+
+      .status-alpha {
+        background: #dc3545;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="version-header">
+        <h1>🔖 版本管理工具</h1>
+        <p>管理您的項目版本和更新歷史</p>
+      </div>
+
+      <div class="version-info">
+        <div class="version-card">
+          <h3>📊 當前版本</h3>
+          <div class="version-number">v2.1.0</div>
+          <div class="version-date">2025-09-14</div>
+          <div class="status-indicator status-stable"></div>
+          <span>穩定版本</span>
+        </div>
+
+        <div class="version-card">
+          <h3>📈 版本統計</h3>
+          <div>總版本數: <strong>3</strong></div>
+          <div>最新更新: <strong>今天</strong></div>
+          <div>狀態: <strong>穩定</strong></div>
+        </div>
+
+        <div class="version-card">
+          <h3>🔄 更新類型</h3>
+          <div>主版本: <strong>1</strong></div>
+          <div>次版本: <strong>1</strong></div>
+          <div>修訂版本: <strong>1</strong></div>
+        </div>
+      </div>
+
+      <div class="version-list">
+        <h3>📋 版本歷史</h3>
+        <div class="version-item current-version">
+          <div>
+            <div class="version-number">v2.1.0</div>
+            <div class="version-date">2025-09-14</div>
+          </div>
+          <div class="version-actions">
+            <button class="btn-success">當前版本</button>
+          </div>
+        </div>
+
+        <div class="version-item">
+          <div>
+            <div class="version-number">v2.0.0</div>
+            <div class="version-date">2024-12-19</div>
+          </div>
+          <div class="version-actions">
+            <button onclick="viewVersion('v2.0.0')">查看</button>
+            <button class="btn-warning"
+                    onclick="rollbackVersion('v2.0.0')">回滾</button>
+          </div>
+        </div>
+
+        <div class="version-item">
+          <div>
+            <div class="version-number">v1.0.0</div>
+            <div class="version-date">2024-12-19</div>
+          </div>
+          <div class="version-actions">
+            <button onclick="viewVersion('v1.0.0')">查看</button>
+            <button class="btn-warning"
+                    onclick="rollbackVersion('v1.0.0')">回滾</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <button onclick="createNewVersion()">🚀 創建新版本</button>
+        <button onclick="exportVersionHistory()">📤 導出版本歷史</button>
+        <button onclick="openVersionGuide()">📖 版本指南</button>
+      </div>
+    </div>
+
+    <script>
+      // 版本數據
+      const versions = {
+        'v2.1.0': {
+          date: '2025-09-14',
+          status: 'stable',
+          changes: [
+            '✨ 可愛提醒框設計',
+            '🎨 漸層背景和圓角設計',
+            '😊 豐富的表情符號',
+            '✨ 流暢的動畫效果',
+            '📱 完全響應式設計',
+            '💬 友善的提醒文字',
+            '🔧 替換所有 alert() 為自定義提醒框',
+            '📱 優化手機版顯示效果'
+          ]
+        },
+        'v2.0.0': {
+          date: '2024-12-19',
+          status: 'stable',
+          changes: [
+            '功夫茶點餐系統 v2.0',
+            '完整的菜單系統',
+            '訂單管理功能',
+            '實用工具區域'
+          ]
+        },
+        'v1.0.0': {
+          date: '2024-12-19',
+          status: 'stable',
+          changes: [
+            '基礎點餐系統',
+            '基本菜單顯示',
+            '簡單訂單功能'
+          ]
+        }
+      };
+
+      function viewVersion(version) {
+        const versionData = versions[version];
+        if (versionData) {
+          alert(`版本 ${version}\n日期: ${versionData.date}\n狀態: ${versionData.status}\n\n更新內容:\n${versionData.changes.join('\n')}`);
+        }
+      }
+
+      function rollbackVersion(version) {
+        if (confirm(`確定要回滾到版本 ${version} 嗎？\n這將覆蓋當前版本。`)) {
+          alert(`正在回滾到版本 ${version}...\n請手動恢復對應的備份文件。`);
+        }
+      }
+
+      function createNewVersion() {
+        const newVersion = prompt('請輸入新版本號 (例如: v2.2.0):');
+        if (newVersion) {
+          alert(`新版本 ${newVersion} 已創建！\n請更新 VERSION.md 文件。`);
+        }
+      }
+
+      function exportVersionHistory() {
+        const history = Object.entries(versions)
+          .map(([version, data]) =>
+            `${version} (${data.date})\n${data.changes.map(change => `- ${change}`).join('\n')}`
+          ).join('\n\n');
+
+        const blob = new Blob([history], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'version_history.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function openVersionGuide() {
+        window.open('版本標籤.md', '_blank');
+      }
+
+      // 頁面載入時顯示歡迎訊息
+      window.addEventListener('load', function () {
+        console.log('🔖 版本管理工具已載入');
+        console.log('📊 當前版本: v2.1.0 (2025-09-14)');
+        console.log('✨ 最新功能: 可愛提醒框設計');
+      });
+    </script>
+  </body>
+
+</html>

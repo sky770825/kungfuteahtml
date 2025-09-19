@@ -1,0 +1,40 @@
+# 備份文件
+backups/
+*_backup_*.html
+index_backup_*.html
+
+# 臨時文件
+*.tmp
+*.temp
+*.log
+
+# 系統文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器文件
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# 測試文件
+test_*.html
+debug_*.html
+
+# 壓縮文件
+*.zip
+*.rar
+*.7z
+
+# 日誌文件
+*.log
+logs/
+
+# 環境文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

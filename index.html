@@ -3329,47 +3329,86 @@
         // 距離計算功能
         const storeAddress = "四維路90號, 楊梅區, 桃園市, 台灣";
         let distanceCalculationTimeout;
+        let googleMapsLoaded = false;
 
-        // 初始化距離計算功能
-        function initDistanceCalculation() {
-          const deliveryAddressInput = document.getElementById('delivery-address');
+        // 使用 SerpApi Google Maps Directions API 計算距離
+        async function calculateDistanceWithGoogleMaps(customerAddress) {
+          console.log('開始 SerpApi 距離計算:', customerAddress);
 
-          deliveryAddressInput.addEventListener('input', function () {
-            const address = this.value.trim();
-            clearTimeout(distanceCalculationTimeout);
-            hideDistanceResult();
+          try {
+            // SerpApi API Key (請替換為您的實際 API Key)
+            const SERPAPI_KEY = 'YOUR_SERPAPI_KEY_HERE'; // 請在這裡輸入您的 SerpApi API Key
 
-            if (address.length > 5) {
-              useBackupDistanceCalculation(address);
+            if (SERPAPI_KEY === 'YOUR_SERPAPI_KEY_HERE') {
+              console.warn('請先設定 SerpApi API Key，使用備用計算方法');
+              return useBackupDistanceCalculation(customerAddress);
             }
-          });
+
+            console.log('正在使用 SerpApi 計算距離...');
+
+            // 使用 SerpApi Google Maps Directions API
+            const origin = encodeURIComponent(storeAddress);
+            const destination = encodeURIComponent(customerAddress);
+
+            const response = await fetch(
+              `https://serpapi.com/search.json?engine=google_maps_directions&origin=${origin}&destination=${destination}&api_key=${SERPAPI_KEY}`
+            );
+
+            if (!response.ok) {
+              throw new Error(`SerpApi 請求失敗: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('SerpApi 響應:', data);
+
+            if (data.directions && data.directions.length > 0) {
+              const direction = data.directions[0];
+              const distanceText = direction.distance;
+
+              // 解析距離文本 (例如: "4.2 km" 或 "4.2 公里")
+              const distanceMatch = distanceText.match(/(\d+\.?\d*)/);
+              if (distanceMatch) {
+                const distanceKm = parseFloat(distanceMatch[1]);
+                console.log('SerpApi 計算距離:', distanceKm, '公里');
+
+                // 顯示結果
+                displayDistanceResult(distanceKm, true);
+                return;
+              }
+            }
+
+            throw new Error('無法解析 SerpApi 響應中的距離信息');
+
+          } catch (error) {
+            console.warn('SerpApi 距離計算失敗:', error);
+            // 如果 SerpApi 計算失敗，使用備用方法
+            useBackupDistanceCalculation(customerAddress);
+          }
         }
 
-        // 備用距離計算方法（快速估算）
-        function useBackupDistanceCalculation(customerAddress) {
+        // Haversine 公式計算兩點間距離
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+          const R = 6371; // 地球半徑（公里）
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        }
+
+        // 顯示距離計算結果
+        function displayDistanceResult(distanceKm, isGoogleMaps = false) {
           const distanceResult = document.getElementById('distance-result');
+          const deliveryLevel = getDeliveryLevel(distanceKm);
 
-          const areaEstimates = {
-            '楊梅': 2, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
-            '新莊': 15, '板橋': 18, '三重': 16, '蘆竹': 10, '大園': 8, '觀音': 15,
-            '龍潭': 12, '平鎮': 6, '八德': 10, '龜山': 14
-          };
-
-          let estimatedDistance = 10;
-
-          for (const [area, distance] of Object.entries(areaEstimates)) {
-            if (customerAddress.includes(area)) {
-              estimatedDistance = distance;
-              break;
-            }
-          }
-
-          const deliveryLevel = getDeliveryLevel(estimatedDistance);
+          const sourceText = isGoogleMaps ? 'Google Maps 計算' : '估算';
 
           distanceResult.innerHTML = `
             <div class="distance-display">
               <span class="distance-icon">📍</span>
-              <span class="distance-text">距離店家: <span class="distance-value">約 ${estimatedDistance}</span>公里 (估算)</span>
+              <span class="distance-text">距離店家: <span class="distance-value">${distanceKm}</span>公里 (${sourceText})</span>
             </div>
             <div class="delivery-level">
               <span class="level-icon">🚚</span>
@@ -3389,14 +3428,116 @@
               </div>
             </div>
             
+            ${!isGoogleMaps ? `
             <div style="margin-top: 8px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; font-size: 0.8rem; color: #856404;">
               ⚠️ 此為估算距離，實際距離請以店家確認為準
             </div>
+            ` : `
+            <div style="margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; font-size: 0.8rem; color: #2e7d32;">
+              ✅ 此為 Google Maps 精確計算距離
+            </div>
+            `}
           `;
           distanceResult.style.display = 'block';
 
           // 更新免運提醒
           updateShippingReminder(deliveryLevel);
+        }
+
+        // 初始化距離計算功能
+        function initDistanceCalculation() {
+          const deliveryAddressInput = document.getElementById('delivery-address');
+
+          deliveryAddressInput.addEventListener('input', function () {
+            const address = this.value.trim();
+            clearTimeout(distanceCalculationTimeout);
+            hideDistanceResult();
+
+            if (address.length > 5) {
+              // 延遲500ms後計算，避免頻繁調用
+              distanceCalculationTimeout = setTimeout(() => {
+                // 使用 SerpApi Google Maps Directions API 計算距離
+                calculateDistanceWithGoogleMaps(address);
+              }, 500);
+            }
+          });
+        }
+
+        // 備用距離計算方法（包含特定路段）
+        function useBackupDistanceCalculation(customerAddress) {
+          console.log('使用備用距離計算方法:', customerAddress);
+
+          // 楊梅區特定路段距離設定
+          const yangmeiSpecificRoutes = {
+            '幼三路': 4.2, '幼獅路': 4.5, '幼獅工業區': 4.5,
+            '四維路': 0.5, '大成路': 1.2, '新成路': 1.5,
+            '永美路': 2.8, '中山路': 1.8, '文化街': 1.5,
+            '梅高路': 3.5, '富岡': 5.2, '楊梅火車站': 2.8,
+            '瑞坪路': 3.8, '高榮路': 3.2, '新榮路': 2.8,
+            '金龍路': 4.8, '秀才路': 5.5, '上湖路': 6.2,
+            '水美路': 4.8, '三湖路': 5.8, '頭湖路': 6.5,
+            '楊湖路': 4.2, '瑞原路': 4.5, '永揚路': 3.8,
+            '新富路': 5.2, '富豐路': 5.8, '瑞溪路': 4.8
+          };
+
+          // 平鎮區特定路段距離設定
+          const pingzhenSpecificRoutes = {
+            '工業一路': 4.2, '工業二路': 4.2, '工業三路': 4.2, '工業四路': 4.2,
+            '工業五路': 4.2, '工業六路': 4.2, '工業七路': 4.2, '工業八路': 4.2,
+            '工業九路': 4.2, '工業十路': 4.2,
+            '中豐路': 5.5, '環南路': 6.8, '振興路': 4.8,
+            '復興街': 5.2, '民族路': 4.2, '中正路': 5.8,
+            '延平路': 6.2, '金陵路': 5.5, '廣泰路': 6.8
+          };
+
+          // 其他區域距離估算
+          const areaEstimates = {
+            '楊梅': 3, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
+            '新莊': 15, '板橋': 18, '三重': 16, '蘆竹': 10, '大園': 8, '觀音': 15,
+            '龍潭': 12, '平鎮': 7, '八德': 10, '龜山': 14
+          };
+
+          let estimatedDistance = 10;
+          let matchedRoute = '';
+
+          // 先檢查楊梅區特定路段
+          for (const [route, distance] of Object.entries(yangmeiSpecificRoutes)) {
+            if (customerAddress.includes(route)) {
+              estimatedDistance = distance;
+              matchedRoute = `楊梅區-${route}`;
+              console.log(`匹配到楊梅區路段: ${route} = ${distance}公里`);
+              break;
+            }
+          }
+
+          // 再檢查平鎮區特定路段
+          if (estimatedDistance === 10) {
+            for (const [route, distance] of Object.entries(pingzhenSpecificRoutes)) {
+              if (customerAddress.includes(route)) {
+                estimatedDistance = distance;
+                matchedRoute = `平鎮區-${route}`;
+                console.log(`匹配到平鎮區路段: ${route} = ${distance}公里`);
+                break;
+              }
+            }
+          }
+
+          // 如果沒有找到特定路段，再檢查其他區域
+          if (estimatedDistance === 10) {
+            for (const [area, distance] of Object.entries(areaEstimates)) {
+              if (customerAddress.includes(area)) {
+                estimatedDistance = distance;
+                matchedRoute = `其他區域-${area}`;
+                console.log(`匹配到其他區域: ${area} = ${distance}公里`);
+                break;
+              }
+            }
+          }
+
+          console.log(`備用計算距離: ${estimatedDistance}公里 (匹配路段: ${matchedRoute || '無匹配'})`);
+
+          // 使用統一的顯示函數
+          displayDistanceResult(estimatedDistance, false);
         }
 
         // 隱藏距離結果
@@ -3471,17 +3612,64 @@
           }
 
           const address = deliveryAddress.value.trim();
+
+          // 楊梅區特定路段距離設定
+          const yangmeiSpecificRoutes = {
+            '幼三路': 4.2, '幼獅路': 4.5, '幼獅工業區': 4.5,
+            '四維路': 0.5, '大成路': 1.2, '新成路': 1.5,
+            '永美路': 2.8, '中山路': 1.8, '文化街': 1.5,
+            '梅高路': 3.5, '富岡': 5.2, '楊梅火車站': 2.8,
+            '瑞坪路': 3.8, '高榮路': 3.2, '新榮路': 2.8,
+            '金龍路': 4.8, '秀才路': 5.5, '上湖路': 6.2,
+            '水美路': 4.8, '三湖路': 5.8, '頭湖路': 6.5,
+            '楊湖路': 4.2, '瑞原路': 4.5, '永揚路': 3.8,
+            '新富路': 5.2, '富豐路': 5.8, '瑞溪路': 4.8
+          };
+
+          // 平鎮區特定路段距離設定
+          const pingzhenSpecificRoutes = {
+            '工業一路': 4.2, '工業二路': 4.2, '工業三路': 4.2, '工業四路': 4.2,
+            '工業五路': 4.2, '工業六路': 4.2, '工業七路': 4.2, '工業八路': 4.2,
+            '工業九路': 4.2, '工業十路': 4.2,
+            '中豐路': 5.5, '環南路': 6.8, '振興路': 4.8,
+            '復興街': 5.2, '民族路': 4.2, '中正路': 5.8,
+            '延平路': 6.2, '金陵路': 5.5, '廣泰路': 6.8
+          };
+
+          // 其他區域距離估算
           const areaEstimates = {
-            '楊梅': 2, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
+            '楊梅': 3, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
             '新莊': 15, '板橋': 18, '三重': 16, '蘆竹': 10, '大園': 8, '觀音': 15,
-            '龍潭': 12, '平鎮': 6, '八德': 10, '龜山': 14
+            '龍潭': 12, '平鎮': 7, '八德': 10, '龜山': 14
           };
 
           let estimatedDistance = 10;
-          for (const [area, distance] of Object.entries(areaEstimates)) {
-            if (address.includes(area)) {
+
+          // 先檢查楊梅區特定路段
+          for (const [route, distance] of Object.entries(yangmeiSpecificRoutes)) {
+            if (address.includes(route)) {
               estimatedDistance = distance;
               break;
+            }
+          }
+
+          // 再檢查平鎮區特定路段
+          if (estimatedDistance === 10) {
+            for (const [route, distance] of Object.entries(pingzhenSpecificRoutes)) {
+              if (address.includes(route)) {
+                estimatedDistance = distance;
+                break;
+              }
+            }
+          }
+
+          // 如果沒有找到特定路段，再檢查其他區域
+          if (estimatedDistance === 10) {
+            for (const [area, distance] of Object.entries(areaEstimates)) {
+              if (address.includes(area)) {
+                estimatedDistance = distance;
+                break;
+              }
             }
           }
 

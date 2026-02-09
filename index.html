@@ -1,0 +1,4280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>功夫茶 KUNG FU TEA - 線上點餐 v2.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* 功夫茶點餐系統 - 現代版型設計 */
+      .kungfu-tea-ordering {
+        --kt-primary: #2d5a27;
+        --kt-primary-hover: #23491f;
+        --kt-accent: #c17f59;
+        --kt-accent-hover: #a86a47;
+        --kt-text: #1a1a1a;
+        --kt-text-muted: #5c5c5c;
+        --kt-bg: #f7f5f2;
+        --kt-surface: #ffffff;
+        --kt-border: #e8e4df;
+        --kt-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+        --kt-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --kt-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
+        --kt-radius: 14px;
+        --kt-radius-lg: 20px;
+        --kt-success: #2d7a3e;
+        --kt-warning: #c94a21;
+        --kt-font: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', '微軟正黑體', sans-serif;
+
+        all: initial;
+        font-family: var(--kt-font) !important;
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        background: var(--kt-bg) !important;
+        min-height: 100vh !important;
+        color: var(--kt-text) !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      .kungfu-tea-ordering *,
+      .kungfu-tea-ordering *::before,
+      .kungfu-tea-ordering *::after {
+        box-sizing: border-box !important;
+      }
+
+      .kungfu-tea-ordering .container {
+        max-width: 1160px !important;
+        margin: 0 auto !important;
+        padding: 24px 20px !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+      }
+
+      .kungfu-tea-ordering header {
+        background: var(--kt-surface) !important;
+        border-radius: var(--kt-radius-lg) !important;
+        padding: 32px 28px !important;
+        text-align: center !important;
+        margin-bottom: 28px !important;
+        box-shadow: var(--kt-shadow) !important;
+        border: 1px solid var(--kt-border) !important;
+      }
+
+      .kungfu-tea-ordering h1 {
+        color: var(--kt-primary) !important;
+        font-size: clamp(1.5rem, 4vw, 2.25rem) !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        margin-bottom: 8px !important;
+        white-space: nowrap !important;
+      }
+
+      .kungfu-tea-ordering .subtitle {
+        color: var(--kt-text-muted) !important;
+        font-size: 0.9375rem !important;
+        font-weight: 500 !important;
+        margin-bottom: 20px !important;
+      }
+
+      .kungfu-tea-ordering .store-info {
+        background: var(--kt-bg) !important;
+        border-radius: var(--kt-radius) !important;
+        padding: 16px 20px !important;
+        margin-top: 12px !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        font-size: 0.875rem !important;
+        align-items: center !important;
+        border: 1px solid var(--kt-border) !important;
+      }
+
+      .kungfu-tea-ordering .store-address {
+        display: none !important;
+      }
+
+      .kungfu-tea-ordering .store-phone {
+        color: var(--kt-text) !important;
+        font-weight: 500 !important;
+      }
+
+      .kungfu-tea-ordering .phone-link {
+        color: var(--kt-surface) !important;
+        text-decoration: none !important;
+        background: var(--kt-primary) !important;
+        padding: 10px 18px !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        font-size: 0.9375rem !important;
+        transition: background 0.2s ease, transform 0.2s ease !important;
+        display: inline-block !important;
+      }
+
+      .kungfu-tea-ordering .phone-link:hover {
+        background: var(--kt-primary-hover) !important;
+        transform: translateY(-1px) !important;
+      }
+
+      .kungfu-tea-ordering .nav-link {
+        color: var(--kt-surface) !important;
+        text-decoration: none !important;
+        background: var(--kt-primary) !important;
+        padding: 10px 18px !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        font-size: 0.9375rem !important;
+        transition: background 0.2s ease, transform 0.2s ease !important;
+      }
+
+      .kungfu-tea-ordering .nav-link:hover {
+        background: var(--kt-primary-hover) !important;
+        transform: translateY(-1px) !important;
+      }
+
+      .kungfu-tea-ordering .menu-link {
+        color: var(--kt-surface) !important;
+        text-decoration: none !important;
+        background: var(--kt-accent) !important;
+        padding: 10px 18px !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        font-size: 0.9375rem !important;
+        transition: background 0.2s ease, transform 0.2s ease !important;
+        display: inline-block !important;
+        border: none !important;
+        cursor: pointer !important;
+      }
+
+      .kungfu-tea-ordering .menu-link:hover {
+        background: var(--kt-accent-hover) !important;
+        transform: translateY(-1px) !important;
+      }
+
+      .kungfu-tea-ordering .delivery-icon {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        margin-right: 6px;
+        font-size: 11px;
+        text-align: center;
+        line-height: 18px;
+        vertical-align: middle;
+      }
+
+      .kungfu-tea-ordering .foodpanda-icon {
+        background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+        color: white;
+        font-size: 10px;
+      }
+
+      .kungfu-tea-ordering .ubereats-icon {
+        background: linear-gradient(135deg, #06c167, #00a651);
+        color: white;
+        font-size: 10px;
+      }
+
+      .kungfu-tea-ordering .phone-icon {
+        background: transparent;
+        color: white;
+        font-size: 10px;
+      }
+
+      .kungfu-tea-ordering .foodpanda-link { background: linear-gradient(135deg, #ff6b9d, #ff8fab) !important; }
+      .kungfu-tea-ordering .foodpanda-link:hover { filter: brightness(1.05); transform: translateY(-1px); }
+      .kungfu-tea-ordering .ubereats-link { background: linear-gradient(135deg, #06c167, #00a651) !important; }
+      .kungfu-tea-ordering .ubereats-link:hover { filter: brightness(1.05); transform: translateY(-1px); }
+      .kungfu-tea-ordering .yovvip-link { background: linear-gradient(135deg, #e85d04, #f48c06) !important; }
+      .kungfu-tea-ordering .yovvip-link:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+      }
+
+      .order-section {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .section {
+        background: var(--kt-surface);
+        border-radius: var(--kt-radius-lg);
+        padding: 28px 24px;
+        box-shadow: var(--kt-shadow);
+        height: fit-content;
+        border: 1px solid var(--kt-border);
+      }
+
+      .section-title {
+        color: var(--kt-primary);
+        font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-align: center;
+        padding-bottom: 12px;
+        border-bottom: 3px solid var(--kt-primary);
+        letter-spacing: 0.02em;
+      }
+
+      .category-dropdown {
+        margin-bottom: 14px;
+      }
+
+      .category-header {
+        background: var(--kt-primary);
+        color: white;
+        padding: 14px 20px;
+        border-radius: var(--kt-radius);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .category-header:hover {
+        background: var(--kt-primary-hover);
+        transform: translateY(-1px);
+      }
+
+      .category-content {
+        display: none;
+        padding: 16px 0 0 4px;
+        border-left: 4px solid var(--kt-primary);
+        margin-left: 8px;
+        padding-left: 16px;
+      }
+
+      .category-content.active {
+        display: block;
+      }
+
+      .dropdown-arrow {
+        transition: transform 0.25s ease;
+      }
+
+      .dropdown-arrow.rotated {
+        transform: rotate(180deg);
+      }
+
+      .beverage-item {
+        background: var(--kt-bg);
+        border: 1px solid var(--kt-border);
+        border-radius: var(--kt-radius);
+        padding: 16px 18px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+
+      .beverage-item:hover {
+        border-color: var(--kt-primary);
+        box-shadow: var(--kt-shadow-sm);
+        transform: translateY(-1px);
+      }
+
+      .beverage-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--kt-text);
+        margin-bottom: 6px;
+      }
+
+      .beverage-name-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .beverage-name-text {
+        flex: 1;
+        font-size: 1rem;
+      }
+
+      .beverage-price-text {
+        color: var(--kt-primary);
+        font-weight: 700;
+        font-size: 1rem;
+        margin-left: 12px;
+      }
+
+      .beverage-prices {
+        color: var(--kt-primary);
+        font-weight: 700;
+        font-size: 0.9375rem;
+        margin-bottom: 4px;
+      }
+
+      .beverage-notes {
+        color: var(--kt-text-muted);
+        font-size: 0.8125rem;
+        line-height: 1.45;
+      }
+
+      /* 特殊備註顏色 */
+      .beverage-notes.recommended {
+        color: #e74c3c !important;
+        font-weight: 600 !important;
+        background: rgba(231, 76, 60, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(231, 76, 60, 0.3) !important;
+      }
+
+      .beverage-notes.no-toppings {
+        color: #f39c12 !important;
+        font-weight: 600 !important;
+        background: rgba(243, 156, 18, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(243, 156, 18, 0.3) !important;
+      }
+
+      .beverage-notes.no-sugar {
+        color: #27ae60 !important;
+        font-weight: 600 !important;
+        background: rgba(39, 174, 96, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(39, 174, 96, 0.3) !important;
+      }
+
+      .beverage-notes.fixed-options {
+        color: #8e44ad !important;
+        font-weight: 600 !important;
+        background: rgba(142, 68, 173, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(142, 68, 173, 0.3) !important;
+      }
+
+      .beverage-notes.ice-limit {
+        color: #3498db !important;
+        font-weight: 600 !important;
+        background: rgba(52, 152, 219, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(52, 152, 219, 0.3) !important;
+      }
+
+      .beverage-notes.included-toppings {
+        color: #e67e22 !important;
+        font-weight: 600 !important;
+        background: rgba(230, 126, 34, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(230, 126, 34, 0.3) !important;
+      }
+
+      .beverage-notes.no-caffeine {
+        color: #9b59b6 !important;
+        font-weight: 600 !important;
+        background: rgba(155, 89, 182, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(155, 89, 182, 0.3) !important;
+      }
+
+      .beverage-notes.no-tea {
+        color: #3498db !important;
+        font-weight: 600 !important;
+        background: rgba(52, 152, 219, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(52, 152, 219, 0.3) !important;
+      }
+
+      .beverage-notes.smoothie {
+        color: #e91e63 !important;
+        font-weight: 600 !important;
+        background: rgba(233, 30, 99, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(233, 30, 99, 0.3) !important;
+      }
+
+      .beverage-notes.limited {
+        color: #d32f2f !important;
+        font-weight: 600 !important;
+        background: rgba(211, 47, 47, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(211, 47, 47, 0.3) !important;
+      }
+
+      .beverage-notes.no-hot {
+        color: #607d8b !important;
+        font-weight: 600 !important;
+        background: rgba(96, 125, 139, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(96, 125, 139, 0.3) !important;
+      }
+
+      .beverage-notes.golden-ratio {
+        color: #ff9800 !important;
+        font-weight: 600 !important;
+        background: rgba(255, 152, 0, 0.1) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+        border: 1px solid rgba(255, 152, 0, 0.3) !important;
+      }
+
+      .star {
+        color: #ffd700;
+        font-weight: bold;
+      }
+
+      /* 訂單區域樣式 */
+      .customer-info {
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .customer-info .info-group {
+        margin-bottom: 0;
+      }
+
+      .customer-info .info-group:has(#delivery-address),
+      .customer-info .info-group:has(#delivery-time) {
+        grid-column: 1 / -1;
+      }
+
+      .info-group {
+        margin-bottom: 15px;
+      }
+
+      .info-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--kt-text);
+      }
+
+      .info-group input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--kt-border);
+        border-radius: var(--kt-radius);
+        font-size: 1rem;
+        font-family: var(--kt-font);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .info-group input:focus {
+        outline: none;
+        border-color: var(--kt-primary);
+        box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.12);
+      }
+
+      .distance-info {
+        background: rgba(45, 90, 39, 0.06);
+        border: 1px solid var(--kt-primary);
+        border-radius: var(--kt-radius);
+        padding: 16px;
+        margin-top: 10px;
+        box-shadow: var(--kt-shadow-sm);
+        animation: slideIn 0.3s ease;
+      }
+
+      .distance-display,
+      .delivery-level,
+      .free-shipping-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      .distance-display:last-child,
+      .delivery-level:last-child,
+      .free-shipping-info:last-child {
+        margin-bottom: 0;
+      }
+
+      .distance-icon,
+      .level-icon,
+      .free-icon {
+        margin-right: 8px;
+        font-size: 1.1rem;
+      }
+
+      /* 免運提醒樣式 */
+      .shipping-reminder {
+        animation: slideIn 0.3s ease;
+      }
+
+      .shipping-reminder-content {
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .shipping-reminder-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+        padding: 6px 0;
+      }
+
+      .shipping-reminder-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .shipping-reminder-icon {
+        margin-right: 8px;
+        font-size: 1rem;
+        min-width: 20px;
+      }
+
+      .shipping-reminder-text {
+        flex: 1;
+        font-weight: 500;
+      }
+
+      .shipping-reminder-amount {
+        font-weight: bold;
+        color: #e74c3c;
+      }
+
+      .shipping-reminder-amount.achieved {
+        color: #27ae60;
+      }
+
+      .shipping-reminder-fee {
+        font-weight: bold;
+        color: #f39c12;
+      }
+
+      .distance-text,
+      .level-text,
+      .free-text {
+        color: var(--kt-text);
+      }
+
+      .distance-value,
+      .level-value,
+      .free-shipping-value {
+        color: var(--kt-primary);
+        font-weight: 700;
+        font-size: 1.0625rem;
+      }
+
+      /* 不同級別的顏色 */
+      .level-low {
+        color: #27ae60;
+      }
+
+      .level-medium {
+        color: #f39c12;
+      }
+
+      .level-high {
+        color: #e74c3c;
+      }
+
+      .level-max {
+        color: #8e44ad;
+      }
+
+      .order-item {
+        background: var(--kt-bg);
+        border-radius: var(--kt-radius);
+        padding: 16px 18px;
+        margin-bottom: 10px;
+        border-left: 4px solid var(--kt-primary);
+        border: 1px solid var(--kt-border);
+        border-left: 4px solid var(--kt-primary);
+      }
+
+      .order-item-header {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--kt-text);
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .order-item-name {
+        flex: 1;
+      }
+
+      .order-item-price {
+        color: var(--kt-primary);
+        font-weight: 700;
+        margin-left: 12px;
+      }
+
+      .order-item-details {
+        color: var(--kt-text-muted);
+        font-size: 0.9375rem;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .order-item-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--kt-bg);
+        border-radius: 999px;
+        padding: 3px;
+        border: 1px solid var(--kt-border);
+      }
+
+      .quantity-btn {
+        background: var(--kt-primary);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9375rem;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .quantity-btn:hover {
+        background: var(--kt-primary-hover);
+        transform: scale(1.08);
+      }
+
+      .quantity-display {
+        background: var(--kt-surface);
+        color: var(--kt-primary);
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        min-width: 24px;
+        text-align: center;
+      }
+
+      .total-section {
+        border-top: 2px solid var(--kt-border);
+        padding-top: 18px;
+        margin-top: 18px;
+        text-align: center;
+      }
+
+      .total-amount {
+        font-size: clamp(1.2rem, 3vw, 1.5rem);
+        font-weight: 700;
+        color: var(--kt-primary);
+        margin-bottom: 16px;
+      }
+
+      .preview-area {
+        background: var(--kt-bg);
+        border: 1px solid var(--kt-border);
+        border-radius: var(--kt-radius);
+        padding: 18px;
+        margin-bottom: 16px;
+        min-height: 200px;
+        font-family: 'Noto Sans TC', ui-monospace, monospace;
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .copy-btn {
+        background: var(--kt-primary);
+        color: white;
+        border: none;
+        border-radius: var(--kt-radius);
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 10px;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .copy-btn:hover {
+        background: var(--kt-primary-hover);
+        transform: translateY(-1px);
+      }
+
+      .btn {
+        padding: 14px 20px;
+        border: none;
+        border-radius: var(--kt-radius);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 10px;
+        transition: transform 0.2s ease, background 0.2s ease;
+        font-family: var(--kt-font);
+      }
+
+      .btn-primary {
+        background: var(--kt-success);
+        color: white;
+        font-size: 1.0625rem;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: var(--kt-surface);
+        color: var(--kt-text-muted);
+        border: 1px solid var(--kt-border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--kt-bg);
+        border-color: var(--kt-primary);
+        color: var(--kt-primary);
+        transform: translateY(-1px);
+      }
+
+      .btn:disabled {
+        background: #c9c9c9;
+        color: #888;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(4px);
+      }
+
+      /* 可愛提醒框樣式 */
+      .cute-alert {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        animation: fadeIn 0.3s ease;
+      }
+
+      .cute-alert-content {
+        background: var(--kt-surface);
+        margin: 15% auto;
+        padding: 0;
+        border-radius: var(--kt-radius-lg);
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: var(--kt-shadow-lg);
+        animation: slideIn 0.4s ease;
+        border: 1px solid var(--kt-border);
+        overflow: hidden;
+      }
+
+      .cute-alert-header {
+        background: var(--kt-primary);
+        padding: 20px;
+        color: white;
+        position: relative;
+      }
+
+      .cute-alert-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        animation: bounce 2s infinite;
+      }
+
+      .cute-alert-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .cute-alert-body {
+        padding: 25px 20px;
+        color: var(--kt-text);
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .cute-alert-message {
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      .cute-alert-details {
+        background: rgba(255, 255, 255, 0.7);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 15px 0;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+      }
+
+      .cute-alert-button {
+        background: var(--kt-primary);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 28px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        margin: 10px;
+      }
+
+      .cute-alert-button:hover {
+        background: var(--kt-primary-hover);
+        transform: translateY(-1px);
+      }
+
+      .cute-alert-button:active {
+        transform: translateY(0);
+      }
+
+      /* 動畫效果 */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(-50px) scale(0.8);
+          opacity: 0;
+        }
+
+        to {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes bounce {
+
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+
+        40% {
+          transform: translateY(-10px);
+        }
+
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.05);
+        }
+
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .cute-alert-content:hover {
+        animation: pulse 0.6s ease;
+      }
+
+      /* 手機版可愛提醒框樣式 */
+      @media (max-width: 768px) {
+        .cute-alert-content {
+          margin: 10% auto;
+          width: 95%;
+          max-width: 350px;
+        }
+
+        .cute-alert-header {
+          padding: 15px;
+        }
+
+        .cute-alert-icon {
+          font-size: 2.5rem;
+          margin-bottom: 8px;
+        }
+
+        .cute-alert-title {
+          font-size: 1.1rem;
+        }
+
+        .cute-alert-body {
+          padding: 20px 15px;
+          font-size: 0.9rem;
+        }
+
+        .cute-alert-message {
+          margin-bottom: 15px;
+          font-size: 0.9rem;
+        }
+
+        .cute-alert-details {
+          padding: 12px;
+          margin: 12px 0;
+          font-size: 0.85rem;
+        }
+
+        .cute-alert-button {
+          padding: 10px 25px;
+          font-size: 0.9rem;
+          margin: 8px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .cute-alert-content {
+          margin: 5% auto;
+          width: 98%;
+          max-width: 320px;
+        }
+
+        .cute-alert-header {
+          padding: 12px;
+        }
+
+        .cute-alert-icon {
+          font-size: 2rem;
+          margin-bottom: 6px;
+        }
+
+        .cute-alert-title {
+          font-size: 1rem;
+        }
+
+        .cute-alert-body {
+          padding: 15px 12px;
+          font-size: 0.85rem;
+        }
+
+        .cute-alert-message {
+          margin-bottom: 12px;
+          font-size: 0.85rem;
+        }
+
+        .cute-alert-details {
+          padding: 10px;
+          margin: 10px 0;
+          font-size: 0.8rem;
+        }
+
+        .cute-alert-button {
+          padding: 8px 20px;
+          font-size: 0.85rem;
+          margin: 6px;
+        }
+      }
+
+      .modal-content {
+        background: var(--kt-surface);
+        margin: 5% auto;
+        padding: 28px 24px;
+        border-radius: var(--kt-radius-lg);
+        width: 90%;
+        max-width: 480px;
+        text-align: center;
+        box-shadow: var(--kt-shadow-lg);
+        border: 1px solid var(--kt-border);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-title {
+        color: var(--kt-primary);
+        font-size: clamp(1.25rem, 3vw, 1.5rem);
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      .option-group {
+        margin: 20px 0;
+        text-align: left;
+      }
+
+      .option-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--kt-text);
+      }
+
+      .option-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .option-btn {
+        background: var(--kt-bg);
+        border: 1px solid var(--kt-border);
+        border-radius: var(--kt-radius);
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--kt-text);
+        transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .option-btn:hover,
+      .option-btn.selected {
+        background: var(--kt-primary);
+        border-color: var(--kt-primary);
+        color: white;
+      }
+
+      .quantity-input {
+        margin: 20px 0;
+      }
+
+      .quantity-input label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--kt-text);
+      }
+
+      .quantity-stepper {
+        display: inline-flex;
+        align-items: center;
+        gap: 0;
+        border: 1px solid var(--kt-border);
+        border-radius: var(--kt-radius);
+        overflow: hidden;
+        background: var(--kt-bg);
+      }
+
+      .quantity-stepper-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        border: none;
+        background: var(--kt-primary);
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition: background 0.2s ease;
+      }
+
+      .quantity-stepper-btn:hover {
+        background: var(--kt-primary-hover);
+      }
+
+      .quantity-stepper-btn:active {
+        opacity: 0.9;
+      }
+
+      .quantity-input input {
+        border: none;
+        border-left: 1px solid var(--kt-border);
+        border-right: 1px solid var(--kt-border);
+        padding: 12px 8px;
+        font-size: 1.125rem;
+        text-align: center;
+        width: 56px;
+        min-width: 48px;
+        background: var(--kt-surface);
+        -moz-appearance: textfield;
+      }
+
+      .quantity-input input::-webkit-outer-spin-button,
+      .quantity-input input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .modal-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+      }
+
+      .empty-order {
+        text-align: center;
+        color: var(--kt-text-muted);
+        font-size: 0.9375rem;
+        margin: 24px 0;
+      }
+
+      .order-controls {
+        display: flex;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+      }
+
+      .order-controls .btn {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      @media (max-width: 1024px) {
+        .main-content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .kungfu-tea-ordering .container {
+          padding: 16px 14px;
+        }
+
+        .kungfu-tea-ordering h1 {
+          font-size: 1.5rem !important;
+        }
+
+        .kungfu-tea-ordering .subtitle {
+          font-size: 0.875rem !important;
+        }
+
+        /* 電腦版外送查詢表優化 */
+        #delivery-fee-table {
+          font-size: 0.65rem !important;
+          max-width: 800px !important;
+          margin: 0 auto !important;
+        }
+
+        #delivery-fee-table th,
+        #delivery-fee-table td {
+          padding: 4px 3px !important;
+          white-space: nowrap !important;
+        }
+
+        /* 電腦版表格容器優化 */
+        @media (min-width: 769px) {
+          #delivery-fee-content {
+            max-width: 900px !important;
+            margin: 0 auto !important;
+          }
+
+          #delivery-fee-content .overflow-x-auto {
+            display: flex;
+            justify-content: center;
+          }
+        }
+
+        /* 手機版外送查詢表優化 */
+        @media (max-width: 768px) {
+          #delivery-fee-table {
+            font-size: 0.7rem !important;
+          }
+
+          #delivery-fee-table th,
+          #delivery-fee-table td {
+            padding: 4px 2px !important;
+            white-space: nowrap !important;
+          }
+
+          /* 手機版標題區域優化 */
+          .section-title {
+            font-size: 1.1rem !important;
+            white-space: nowrap !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+
+          /* 手機版按鈕區域優化 */
+          #toggle-delivery-fee {
+            font-size: 0.8rem !important;
+            padding: 6px 10px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+          }
+        }
+
+        #delivery-fee-content {
+          margin-top: 10px !important;
+        }
+
+        #delivery-fee-content h3 {
+          font-size: 1rem !important;
+          margin-bottom: 8px !important;
+        }
+
+        #delivery-fee-content .section {
+          padding: 10px !important;
+        }
+
+        /* 手機版卡片式顯示優化 */
+        #delivery-fee-tbody .option-btn {
+          font-size: 0.7rem !important;
+          padding: 6px 8px !important;
+        }
+
+        #delivery-fee-tbody div[style*="grid-template-columns"] {
+          font-size: 0.7rem !important;
+          padding: 8px !important;
+        }
+
+        .kungfu-tea-ordering .store-info {
+          flex-direction: row !important;
+          gap: 10px !important;
+          text-align: center !important;
+          font-size: 0.8rem !important;
+          flex-wrap: nowrap !important;
+          justify-content: center !important;
+          overflow-x: auto !important;
+        }
+
+        .kungfu-tea-ordering .store-address {
+          display: none !important;
+        }
+
+        .kungfu-tea-ordering h1 {
+          font-size: 1.375rem !important;
+        }
+
+        .kungfu-tea-ordering .nav-link {
+          display: inline-block !important;
+          margin-top: 5px !important;
+          padding: 8px 10px !important;
+          font-size: 0.8rem !important;
+        }
+
+        .kungfu-tea-ordering .phone-link {
+          padding: 8px 10px !important;
+          font-size: 0.8rem !important;
+        }
+
+        /* 手機版聯絡方式區域優化 */
+        .contact-links-container {
+          flex-direction: column !important;
+          gap: 10px !important;
+        }
+
+        .contact-links-container .phone-link,
+        .contact-links-container .nav-link {
+          width: 100% !important;
+          text-align: center !important;
+          padding: 12px 15px !important;
+          font-size: 0.9rem !important;
+        }
+
+        /* 手機版菜單圖片優化 */
+        #menu-modal .modal-content img {
+          max-width: 95% !important;
+          max-height: 60vh !important;
+        }
+
+        /* 手機版：希望送達時間維持橫向並排（時間＋整/前 同一行） */
+        .info-group .delivery-time-row {
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          gap: 10px !important;
+        }
+
+        .info-group input[type="time"],
+        .info-group select {
+          font-size: 1rem !important;
+          padding: 12px !important;
+        }
+
+        /* 手機版訂購資訊改為單欄 */
+        .customer-info {
+          grid-template-columns: 1fr;
+        }
+
+        .customer-info .info-group:has(#delivery-address),
+        .customer-info .info-group:has(#delivery-time) {
+          grid-column: 1;
+        }
+
+        .kungfu-tea-ordering .delivery-icon {
+          width: 14px;
+          height: 14px;
+          font-size: 9px;
+          line-height: 14px;
+          margin-right: 4px;
+        }
+
+        .main-content {
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* 手機版：菜單區域在第一個 */
+        .main-content .section:nth-child(1) {
+          order: 1;
+        }
+
+        /* 手機版：訂單區域在第二個 */
+        .main-content .order-section {
+          order: 2;
+        }
+
+        /* 手機版：訂單預覽在第三個 */
+        .main-content .section:nth-child(3) {
+          order: 3;
+        }
+
+        .section {
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        .section-title {
+          font-size: 1.25rem !important;
+          margin-bottom: 16px;
+        }
+
+        .category-header {
+          padding: 12px 16px;
+          font-size: 0.9375rem;
+        }
+
+        .beverage-item {
+          padding: 14px 16px;
+          margin-bottom: 8px;
+        }
+
+        .beverage-name-price {
+          font-size: 1rem;
+        }
+
+        .beverage-name-text {
+          font-size: 0.9375rem;
+        }
+
+        .beverage-price-text {
+          font-size: 0.9375rem;
+        }
+
+
+        .beverage-notes {
+          font-size: 0.85rem;
+        }
+
+        .info-group input {
+          padding: 12px;
+          font-size: 1rem;
+        }
+
+        .order-item {
+          padding: 12px;
+        }
+
+        .quantity-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 1rem;
+        }
+
+        .quantity-controls {
+          gap: 2px;
+          padding: 1px;
+        }
+
+        .quantity-display {
+          font-size: 0.8rem;
+          padding: 1px 6px;
+        }
+
+        .order-item-header {
+          flex-direction: row;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .order-item-details {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .order-item-details .quantity-controls {
+          flex-shrink: 0;
+        }
+
+        .modal-content {
+          margin: 4% auto;
+          padding: 20px 16px;
+          width: 94%;
+          max-width: 420px;
+          max-height: 88vh;
+        }
+
+        /* 手機版：訂單彈窗整體按鈕區更緊湊 */
+        #order-modal .modal-content {
+          padding: 14px 12px;
+          max-height: 90vh;
+        }
+
+        #order-modal .modal-title {
+          font-size: 1.2rem;
+          margin-bottom: 12px;
+        }
+
+        #order-modal .option-group {
+          margin: 10px 0;
+        }
+
+        #order-modal .option-group label {
+          margin-bottom: 6px;
+          font-size: 0.875rem;
+        }
+
+        #order-modal .option-buttons {
+          gap: 6px;
+        }
+
+        #order-modal .option-btn {
+          padding: 8px 10px;
+          font-size: 0.85rem;
+          min-height: 40px;
+        }
+
+        #order-modal .quantity-input {
+          margin: 12px 0;
+        }
+
+        #order-modal .quantity-input label {
+          margin-bottom: 6px;
+          font-size: 0.875rem;
+        }
+
+        #order-modal .quantity-stepper-btn {
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+          font-size: 1.25rem;
+        }
+
+        #order-modal .quantity-input input {
+          width: 52px;
+          padding: 10px 6px;
+          font-size: 1.1rem;
+        }
+
+        #order-modal .modal-buttons {
+          margin-top: 14px;
+          gap: 8px;
+        }
+
+        #order-modal .modal-buttons .btn {
+          padding: 12px 14px;
+          font-size: 0.95rem;
+        }
+
+        .modal-title {
+          font-size: 1.3rem;
+        }
+
+        .option-buttons {
+          gap: 8px;
+        }
+
+        .option-btn {
+          padding: 12px 14px;
+          font-size: 0.9rem;
+          min-height: 44px;
+        }
+
+        .quantity-stepper-btn {
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          min-height: 48px;
+          font-size: 1.4rem;
+        }
+
+        .quantity-input input {
+          width: 60px;
+          padding: 14px 8px;
+          font-size: 1.2rem;
+        }
+
+        .modal-buttons {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .btn {
+          padding: 15px;
+          font-size: 1rem;
+        }
+
+        .preview-area {
+          font-size: 0.8rem;
+          min-height: 150px;
+          padding: 12px;
+        }
+
+        .order-controls {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .order-controls .btn {
+          min-width: auto;
+        }
+
+        .copy-btn {
+          font-size: 1rem;
+          padding: 15px;
+        }
+
+        .btn-primary {
+          font-size: 1rem;
+          padding: 15px;
+        }
+
+        /* 距離計算結果平板版優化 */
+        .distance-info {
+          padding: 12px;
+          margin-top: 8px;
+        }
+
+        .distance-display,
+        .delivery-level,
+        .free-shipping-info {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+
+        .distance-icon,
+        .level-icon,
+        .free-icon {
+          font-size: 1rem;
+          margin-right: 6px;
+        }
+
+        /* 免運提醒平板版樣式 */
+        .shipping-reminder {
+          padding: 10px;
+          margin-top: 10px;
+        }
+
+        .shipping-reminder-content {
+          font-size: 0.85rem;
+        }
+
+        .shipping-reminder-item {
+          margin-bottom: 5px;
+          padding: 5px 0;
+        }
+
+        .shipping-reminder-icon {
+          font-size: 0.9rem;
+          margin-right: 6px;
+          min-width: 18px;
+        }
+
+        .distance-value,
+        .level-value,
+        .free-shipping-value {
+          font-size: 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .kungfu-tea-ordering .container {
+          padding: 12px 10px;
+        }
+
+        .kungfu-tea-ordering h1 {
+          font-size: 1.25rem !important;
+        }
+
+        .kungfu-tea-ordering .subtitle {
+          font-size: 0.8125rem !important;
+        }
+
+        .section {
+          padding: 18px 16px;
+        }
+
+        .beverage-item {
+          padding: 12px 14px;
+        }
+
+        .category-header {
+          padding: 12px 14px;
+          font-size: 0.875rem;
+        }
+
+        #order-modal .modal-content {
+          margin: 2% auto;
+          padding: 12px 10px;
+          width: 96%;
+          max-width: 380px;
+          max-height: 92vh;
+        }
+
+        #order-modal .modal-title {
+          margin-bottom: 10px;
+          font-size: 1.1rem;
+        }
+
+        #order-modal .option-group {
+          margin: 8px 0;
+        }
+
+        #order-modal .option-group label {
+          margin-bottom: 4px;
+          font-size: 0.8125rem;
+        }
+
+        #order-modal .option-buttons {
+          gap: 5px;
+        }
+
+        #order-modal .option-btn {
+          padding: 6px 8px;
+          font-size: 0.8125rem;
+          min-height: 38px;
+        }
+
+        #order-modal .quantity-input {
+          margin: 10px 0;
+        }
+
+        #order-modal .quantity-stepper-btn {
+          width: 42px;
+          height: 42px;
+          min-width: 42px;
+          min-height: 42px;
+          font-size: 1.2rem;
+        }
+
+        #order-modal .quantity-input input {
+          width: 48px;
+          padding: 8px 4px;
+          font-size: 1rem;
+        }
+
+        #order-modal .modal-buttons {
+          margin-top: 10px;
+          gap: 6px;
+        }
+
+        #order-modal .modal-buttons .btn {
+          padding: 10px 12px;
+          font-size: 0.9rem;
+        }
+
+        .option-buttons {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .option-btn {
+          padding: 10px 12px;
+          font-size: 0.85rem;
+          min-height: 44px;
+        }
+
+        .quantity-stepper-btn {
+          width: 52px;
+          height: 52px;
+          min-width: 52px;
+          min-height: 52px;
+          font-size: 1.5rem;
+        }
+
+        .quantity-input input {
+          width: 56px;
+          padding: 14px 6px;
+          font-size: 1.25rem;
+        }
+
+        /* 超小螢幕外送查詢表優化 */
+        @media (max-width: 480px) {
+          #delivery-fee-table {
+            font-size: 0.7rem !important;
+          }
+
+          #delivery-fee-table th,
+          #delivery-fee-table td {
+            padding: 4px 2px !important;
+          }
+        }
+
+        #delivery-fee-content h3 {
+          font-size: 1rem !important;
+        }
+
+        #delivery-fee-tbody div[style*="grid-template-columns"] {
+          font-size: 0.7rem !important;
+          padding: 8px !important;
+          gap: 4px !important;
+        }
+
+        /* 距離計算結果手機版優化 */
+        .distance-info {
+          padding: 10px;
+          margin-top: 6px;
+          border-radius: 8px;
+        }
+
+        .distance-display,
+        .delivery-level,
+        .free-shipping-info {
+          font-size: 0.85rem;
+          margin-bottom: 6px;
+        }
+
+        .distance-icon,
+        .level-icon,
+        .free-icon {
+          font-size: 0.9rem;
+          margin-right: 6px;
+        }
+
+        /* 免運提醒手機版樣式 */
+        .shipping-reminder {
+          padding: 8px;
+          margin-top: 8px;
+        }
+
+        .shipping-reminder-content {
+          font-size: 0.8rem;
+        }
+
+        .shipping-reminder-item {
+          margin-bottom: 4px;
+          padding: 4px 0;
+        }
+
+        .shipping-reminder-icon {
+          font-size: 0.85rem;
+          margin-right: 5px;
+          min-width: 16px;
+        }
+
+        .shipping-reminder-text {
+          font-size: 0.8rem;
+        }
+
+        .shipping-reminder-amount,
+        .shipping-reminder-fee {
+          font-size: 0.8rem;
+        }
+
+        .distance-value,
+        .level-value,
+        .free-shipping-value {
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="kungfu-tea-ordering">
+      <div class="container">
+        <header>
+          <h1>功夫茶 KUNG FU TEA</h1>
+          <div class="subtitle">點餐文字生成器 | 製作人：楊梅四維店-蔡店長</div>
+          <div class="store-info">
+            <div class="store-address">
+              📍 楊梅區四維路90號
+            </div>
+            <div class="store-navigation">
+              <a href="https://foodpanda.go.link/34CwH"
+                 target="_blank"
+                 class="nav-link delivery-link foodpanda-link">
+                <span class="delivery-icon foodpanda-icon">🐼</span>foodpanda
+              </a>
+              <a href="https://www.ubereats.com/tw/store/%E5%8A%9F%E5%A4%AB%E8%8C%B6-kungfutea-%E6%A5%8A%E6%A2%85%E5%9B%9B%E7%B6%AD%E5%BA%97/zo2ii2cgUcCaK5-5O96-Fw?diningMode=DELIVERY&ps=1&sc=SEARCH_SUGGESTION"
+                 target="_blank"
+                 class="nav-link delivery-link ubereats-link"
+                 style="margin-left: 10px;">
+                <span class="delivery-icon ubereats-icon">🍽️</span>Uber Eats
+              </a>
+              <a href="https://www.yovvip.com/ORD/Order?store=MTMyXzQyNA%3D%3D&appbar=f"
+                 target="_blank"
+                 class="nav-link delivery-link yovvip-link"
+                 style="margin-left: 10px;">
+                <span class="delivery-icon yovvip-icon">🍴</span>享什麼線上點餐
+              </a>
+              <button class="nav-link menu-link"
+                      id="view-menu-btn"
+                      style="margin-left: 10px;">
+                📋 查看完整菜單
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div class="main-content">
+          <!-- 菜單區域 -->
+          <div class="section">
+            <h2 class="section-title">菜單</h2>
+            <div id="menu-container"></div>
+          </div>
+
+          <!-- 訂單與訂購資訊合併區域 -->
+          <div class="section order-section">
+            <h2 class="section-title">您的訂單</h2>
+            <div id="order-container">
+              <div class="empty-order">尚未選擇任何飲品</div>
+            </div>
+
+            <div class="total-section">
+              <div class="total-amount">總計: $<span id="total-amount">0</span></div>
+            </div>
+
+            <h3 class="section-title" style="font-size: 1.2rem; margin: 24px 0 16px 0; border-top: 2px solid var(--kt-border); padding-top: 18px;">訂購資訊</h3>
+            <div class="customer-info">
+              <div class="info-group">
+                <label for="customer-name">訂購人姓名</label>
+                <input type="text"
+                       id="customer-name"
+                       placeholder="請輸入姓名">
+              </div>
+              <div class="info-group">
+                <label for="customer-phone">聯絡電話</label>
+                <input type="tel"
+                       id="customer-phone"
+                       placeholder="聯絡電話or公司電話#分機">
+              </div>
+              <div class="info-group">
+                <label for="delivery-address">外送地址</label>
+                <input type="text"
+                       id="delivery-address"
+                       placeholder="外送地址+(公司行號)"
+                       value="楊梅區">
+
+                <!-- 距離計算結果顯示 -->
+                <div id="distance-result"
+                     class="distance-info"
+                     style="display: none;">
+                  <div class="distance-display">
+                    <span class="distance-icon">📍</span>
+                    <span class="distance-text">距離店家: <span id="distance-value">-</span>公里</span>
+                  </div>
+                  <div class="delivery-level"
+                       id="delivery-level">
+                    <span class="level-icon">🚚</span>
+                    <span class="level-text">外送級別: <span id="level-value">-</span></span>
+                  </div>
+                  <div class="free-shipping-info"
+                       id="free-shipping-info">
+                    <span class="free-icon">💰</span>
+                    <span class="free-text">免運條件: <span id="free-shipping-value">-</span></span>
+                  </div>
+
+                  <!-- 免運提醒區域 -->
+                  <div id="shipping-reminder"
+                       class="shipping-reminder"
+                       style="display: none; margin-top: 12px; padding: 12px; background: rgba(45, 90, 39, 0.06); border-radius: 14px; border-left: 4px solid var(--kt-primary);">
+                    <div id="shipping-reminder-content">
+                      <!-- 動態內容將在這裡顯示 -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="info-group">
+                <label for="delivery-time">希望送達時間</label>
+                <div class="delivery-time-row" style="display: flex; gap: 10px; align-items: center;">
+                  <input type="time"
+                         id="delivery-time"
+                         min="10:00"
+                         max="17:00"
+                         step="1800"
+                         style="flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--kt-border); border-radius: 14px; font-size: 1rem;">
+                  <select id="delivery-time-unit"
+                          style="flex: 0 0 80px; padding: 12px 14px; border: 1px solid var(--kt-border); border-radius: 14px; font-size: 1rem; background: white;">
+                    <option value="整">整</option>
+                    <option value="前">前</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 預覽區域 -->
+          <div class="section">
+            <h2 class="section-title">請確認以下訂單預覽</h2>
+            <div class="preview-area"
+                 id="order-preview">請先填寫訂購資訊和選擇飲品...</div>
+
+            <div class="order-controls">
+              <button class="btn btn-secondary"
+                      id="save-order">💾 儲存訂單</button>
+              <button class="btn btn-secondary"
+                      id="load-orders">📋 載入訂單</button>
+              <button class="btn btn-secondary"
+                      id="clear-order">🗑️ 清空訂單</button>
+            </div>
+
+            <button class="copy-btn"
+                    id="copy-order"
+                    disabled>📋 複製訂單文字後點擊下方↓</button>
+            <button class="btn btn-primary"
+                    id="send-order"
+                    disabled>將訂單發送到 LINE 官方帳號</button>
+
+            <!-- 聯絡方式區域 -->
+            <div class="contact-links-container"
+                 style="margin-top: 20px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
+              <a href="tel:03-4882975"
+                 class="phone-link">
+                <span class="delivery-icon phone-icon">📞</span>電話：03-4882975
+              </a>
+              <a href="https://maps.app.goo.gl/DmhQah32YQhwvBE98"
+                 target="_blank"
+                 class="nav-link">
+                🗺️ 導航到四維路90號
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 外送金額查詢區域 -->
+        <div class="section"
+             style="margin-top: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 class="section-title"
+                style="margin-bottom: 0; white-space: nowrap;">外送免運條件查詢</h2>
+            <button id="toggle-delivery-fee"
+                    class="btn btn-secondary"
+                    style="padding: 8px 15px; font-size: 0.9rem; position: relative; z-index: 10; cursor: pointer;">
+              📋 顯示查詢表
+            </button>
+          </div>
+
+          <div id="delivery-fee-content"
+               style="display: none; max-width: 900px; margin: 0 auto;">
+            <div style="background: var(--kt-bg); border-radius: var(--kt-radius); padding: 20px; margin-bottom: 15px;">
+              <h3 style="color: var(--kt-primary); margin-bottom: 15px; text-align: center;">🚚 外送距離與運費對照表</h3>
+              <div style="overflow-x: auto;">
+                <table id="delivery-fee-table"
+                       style="width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; font-size: 0.65rem;">
+                  <thead>
+                    <tr style="background: var(--kt-primary); color: white;">
+                      <th style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; font-size: 0.65rem;">
+                        外送距離</th>
+                      <th style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; font-size: 0.65rem;">運費
+                      </th>
+                      <th style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; font-size: 0.65rem;">
+                        免運費條件</th>
+                      <th style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; font-size: 0.65rem;">
+                        訂購金額需達</th>
+                    </tr>
+                  </thead>
+                  <tbody id="delivery-fee-tbody">
+                    <!-- 動態生成表格內容 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div
+                 style="background: rgba(45, 90, 39, 0.08); border-left: 4px solid var(--kt-primary); padding: 16px; border-radius: var(--kt-radius); margin-bottom: 15px;">
+              <h4 style="color: var(--kt-primary); margin-bottom: 10px; font-weight: 600;">💡 使用說明：</h4>
+              <ul style="margin: 0; padding-left: 20px; color: var(--kt-text);">
+                <li>根據您的地址距離選擇對應的運費</li>
+                <li>達到免運費條件即可免收運費</li>
+                <li>未達免運條件時，需支付對應運費</li>
+                <li>最低訂購金額請參考「訂購金額需達」欄位</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 實用工具區域 -->
+        <div class="section"
+             style="margin-top: 30px;">
+          <h2 class="section-title">實用工具</h2>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+            <a href="https://property-rr6ksz.manus.space"
+               target="_blank"
+               class="nav-link"
+               style="background: linear-gradient(135deg, #4CAF50, #45a049);">
+              🏠 買賣試算系統
+            </a>
+            <a href="https://lin.ee/HzGBJ8e"
+               target="_blank"
+               class="nav-link"
+               style="background: linear-gradient(135deg, #00C300, #00A000);">
+              🏠 免費諮詢房地產
+            </a>
+            <a href="https://realtor.houseprice.tw/agent/buy/0925666597/"
+               target="_blank"
+               class="nav-link"
+               style="background: linear-gradient(135deg, #FF6B35, #E55A2B);">
+              🏡 房屋精選物件
+            </a>
+            <a href="https://line.me/ti/g2/VXIuR9NyhkWFQPuMeWTUp_RHitaW82_0r8MU1Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default"
+               target="_blank"
+               class="nav-link"
+               style="background: linear-gradient(135deg, #00C300, #00A000);">
+              🍽️ 四維商圈餐車群
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 可愛提醒框 -->
+      <div id="cute-alert"
+           class="cute-alert">
+        <div class="cute-alert-content">
+          <div class="cute-alert-header">
+            <div class="cute-alert-icon"
+                 id="alert-icon">😊</div>
+            <h3 class="cute-alert-title"
+                id="alert-title">溫馨提醒</h3>
+          </div>
+          <div class="cute-alert-body">
+            <div class="cute-alert-message"
+                 id="alert-message">請先填寫完整的訂購資訊！</div>
+            <div class="cute-alert-details"
+                 id="alert-details"
+                 style="display: none;">
+              <div>📝 請填寫以下資訊：</div>
+              <div id="missing-fields"></div>
+            </div>
+            <button class="cute-alert-button"
+                    id="alert-ok-btn">好的，我知道了！</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 菜單查看模態框 -->
+      <div id="menu-modal"
+           class="modal">
+        <div class="modal-content"
+             style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+          <h3 class="modal-title">功夫茶楊梅四維店完整菜單</h3>
+          <div style="text-align: center; margin: 20px 0;">
+            <img src="https://res.cloudinary.com/diiyszovx/image/upload/v1757818170/DM_o9gvtj.png"
+                 alt="功夫茶完整菜單"
+                 style="max-width: 80%; max-height: 70vh; height: auto; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          </div>
+          <div class="modal-buttons">
+            <button class="btn btn-secondary"
+                    id="close-menu-modal">關閉</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 選擇選項的模態框 -->
+      <div id="order-modal"
+           class="modal">
+        <div class="modal-content">
+          <h3 class="modal-title"
+              id="modal-title">選擇飲品選項</h3>
+
+          <div class="option-group">
+            <label>尺寸價格</label>
+            <div class="option-buttons"
+                 id="size-options"></div>
+          </div>
+
+          <div class="option-group"
+               id="sugar-group">
+            <label>甜度</label>
+            <div class="option-buttons"
+                 id="sugar-options">
+              <div class="option-btn selected"
+                   data-value="全糖">全糖</div>
+              <div class="option-btn"
+                   data-value="少糖">少糖</div>
+              <div class="option-btn"
+                   data-value="半糖">半糖</div>
+              <div class="option-btn"
+                   data-value="微糖">微糖</div>
+              <div class="option-btn"
+                   data-value="無糖">無糖</div>
+            </div>
+          </div>
+
+          <div class="option-group"
+               id="ice-group">
+            <label>冰塊</label>
+            <div class="option-buttons"
+                 id="ice-options">
+              <div class="option-btn selected"
+                   data-value="正冰">正冰</div>
+              <div class="option-btn"
+                   data-value="少冰">少冰</div>
+              <div class="option-btn"
+                   data-value="微冰">微冰</div>
+              <div class="option-btn"
+                   data-value="去冰">去冰</div>
+              <div class="option-btn"
+                   data-value="熱飲">熱飲</div>
+            </div>
+          </div>
+
+          <div class="option-group"
+               id="tea-group"
+               style="display: none;">
+            <label>茶品選擇</label>
+            <div class="option-buttons"
+                 id="tea-options"></div>
+          </div>
+
+          <div class="option-group"
+               id="toppings-group"
+               style="display: none;">
+            <label>加料選擇</label>
+            <div class="option-buttons"
+                 id="toppings-options"></div>
+          </div>
+
+          <div class="quantity-input">
+            <label for="quantity">數量</label>
+            <div class="quantity-stepper">
+              <button type="button" class="quantity-stepper-btn" id="quantity-minus" aria-label="減少">−</button>
+              <input type="number"
+                     id="quantity"
+                     min="1"
+                     value="1"
+                     pattern="[0-9]*"
+                     inputmode="numeric">
+              <button type="button" class="quantity-stepper-btn" id="quantity-plus" aria-label="增加">+</button>
+            </div>
+          </div>
+
+          <div class="modal-buttons">
+            <button class="btn btn-primary"
+                    id="add-to-order">加入訂單</button>
+            <button class="btn btn-secondary"
+                    id="cancel-order">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // 加料選項資料
+        const toppings = [
+          { name: "黑糖波霸", price: 10, displayName: "波霸" },
+          { name: "仙草", price: 10, displayName: "仙草" },
+          { name: "寒天球", price: 10, displayName: "寒天球" },
+          { name: "蒟蒻", price: 10, displayName: "蒟蒻" },
+          { name: "椰果", price: 10, displayName: "椰果" },
+          { name: "38料", price: 10, displayName: "38料" }
+        ];
+
+        // 飲品資料
+        const menuData = [
+          // 聯名・特選
+          { name: "黑霸烏龍奶", category: "聯名・特選", prices: { 'L': 60 }, notes: "期間限定", canAddToppings: true },
+
+          // 功夫・好茶
+          { name: "功夫茶王", category: "功夫・好茶", prices: { 'L': 45, '瓶': 45 }, notes: "★ 無糖微冰限定, 不可加料", fixedOptions: { sugar: "無糖", ice: "微冰" }, canAddToppings: false },
+          { name: "隱山烏龍", category: "功夫・好茶", prices: { 'L': 45, '瓶': 45 }, notes: "★ 無糖限定, 不可加料", fixedOptions: { sugar: "無糖" }, canAddToppings: false },
+          { name: "岩葉紅茶", category: "功夫・好茶", prices: { 'L': 35, '瓶': 55 }, canAddToppings: true },
+          { name: "翠玉綠茶", category: "功夫・好茶", prices: { 'L': 35, '瓶': 55 }, canAddToppings: true },
+          { name: "四季春青茶", category: "功夫・好茶", prices: { 'L': 35, '瓶': 55 }, canAddToppings: true },
+          { name: "烏龍鐵觀音", category: "功夫・好茶", prices: { 'L': 35, '瓶': 55 }, canAddToppings: true },
+          { name: "蜜桃胭脂紅茶", category: "功夫・好茶", prices: { 'L': 40, '瓶': 60 }, canAddToppings: true },
+          { name: "手作冬瓜茶", category: "功夫・好茶", prices: { 'L': 35 }, notes: "無外加糖", canAddToppings: true },
+          { name: "阿里山冰茶", category: "功夫・好茶", prices: { 'L': 50 }, notes: "限售, 不可加料, 不可做熱飲", canAddToppings: false },
+          { name: "日月潭紅玉", category: "功夫・好茶", prices: { 'L': 50 }, notes: "限售, 不可加料, 不可做熱飲", canAddToppings: false },
+          { name: "芝士奶蓋綠茶/青茶", category: "功夫・好茶", prices: { 'L': 70 }, teaOptions: ["綠茶", "青茶"], canAddToppings: true },
+          { name: "芝士奶蓋紅茶/烏龍", category: "功夫・好茶", prices: { 'L': 70 }, teaOptions: ["紅茶", "烏龍"], canAddToppings: true },
+          { name: "玫瑰冰茶", category: "功夫・好茶", prices: { 'L': 55 }, notes: "無外加糖", canAddToppings: true },
+          { name: "青梅綠茶", category: "功夫・好茶", prices: { 'L': 55 }, canAddToppings: true },
+          { name: "多多綠茶", category: "功夫・好茶", prices: { 'L': 60 }, canAddToppings: true },
+          { name: "胭脂多多", category: "功夫・好茶", prices: { 'L': 60 }, canAddToppings: true },
+          { name: "粉粿胭脂紅", category: "功夫・好茶", prices: { 'L': 50 }, canAddToppings: true },
+          { name: "冰淇淋岩葉紅茶", category: "功夫・好茶", prices: { 'L': 60 }, notes: "最低微冰", canAddToppings: true },
+
+          // 功夫・鮮奶
+          { name: "黑糖波霸鮮奶", category: "功夫・鮮奶", prices: { 'M': 65, 'L': 80 }, notes: "無外加糖, 最低微冰", noSugarOptions: true, canAddToppings: true },
+          { name: "紅豆粉粿鮮奶", category: "功夫・鮮奶", prices: { 'M': 65, 'L': 80 }, notes: "無外加糖, 固定微冰", fixedOptions: { sugar: "無外加糖", ice: "微冰" }, canAddToppings: false },
+          { name: "巧克力鮮奶", category: "功夫・鮮奶", prices: { 'M': 75 }, canAddToppings: true },
+          { name: "岩葉紅茶拿鐵", category: "功夫・鮮奶", prices: { 'M': 55, 'L': 65 }, canAddToppings: true },
+          { name: "烏龍觀音拿鐵", category: "功夫・鮮奶", prices: { 'M': 55, 'L': 65 }, canAddToppings: true },
+          { name: "英式伯爵拿鐵", category: "功夫・鮮奶", prices: { 'M': 70 }, canAddToppings: true },
+          { name: "蜜桃胭脂拿鐵", category: "功夫・鮮奶", prices: { 'M': 70 }, canAddToppings: true },
+          { name: "冰淇淋紅茶拿鐵", category: "功夫・鮮奶", prices: { 'M': 75 }, notes: "最低微冰", canAddToppings: true },
+
+          // 功夫・奶茶
+          { name: "38奶霸", category: "功夫・奶茶", prices: { 'M': 60, 'L': 65 }, notes: "波霸+珍珠+仙草", canAddToppings: false },
+          { name: "黑糖波霸奶茶", category: "功夫・奶茶", prices: { 'M': 55, 'L': 60 }, notes: "★", canAddToppings: true },
+          { name: "咖啡凍奶茶", category: "功夫・奶茶", prices: { 'M': 60, 'L': 65 }, canAddToppings: true },
+          { name: "厚奶茶/奶綠", category: "功夫・奶茶", prices: { 'M': 50, 'L': 55 }, canAddToppings: true },
+          { name: "烏龍觀音奶茶", category: "功夫・奶茶", prices: { 'M': 50, 'L': 55 }, canAddToppings: true },
+          { name: "英式伯爵奶茶", category: "功夫・奶茶", prices: { 'M': 65 }, canAddToppings: true },
+          { name: "蜜桃胭脂奶茶", category: "功夫・奶茶", prices: { 'M': 65 }, canAddToppings: true },
+          { name: "莊園玫瑰奶茶", category: "功夫・奶茶", prices: { 'M': 65 }, canAddToppings: true },
+          { name: "巧克力奶茶", category: "功夫・奶茶", prices: { 'M': 65 }, canAddToppings: true },
+
+          // 功夫・水果
+          { name: "輕飲水果茶王", category: "功夫・水果", prices: { 'L': 65 }, notes: "★ 推薦, 不可加料", canAddToppings: false },
+          { name: "寒天柚香飲", category: "功夫・水果", prices: { 'L': 65 }, canAddToppings: true },
+          { name: "粉粿柚香綠", category: "功夫・水果", prices: { 'L': 65 }, canAddToppings: true },
+          { name: "鮮榨柳橙綠", category: "功夫・水果", prices: { 'L': 65 }, notes: "固定半糖", fixedOptions: { sugar: "半糖" }, canAddToppings: true },
+          { name: "芭樂檸檬綠", category: "功夫・水果", prices: { 'L': 75 }, notes: "★ 半糖微冰", fixedOptions: { sugar: "半糖", ice: "微冰" }, canAddToppings: false },
+          { name: "黃金芒果綠", category: "功夫・水果", prices: { 'L': 60 }, canAddToppings: true },
+          { name: "百香3Q", category: "功夫・水果", prices: { 'L': 60 }, notes: "不含茶, 波霸+珍珠+椰果", canAddToppings: false },
+          { name: "百香羅勒子", category: "功夫・水果", prices: { 'L': 55 }, notes: "不含茶", canAddToppings: true },
+          { name: "冬瓜檸檬", category: "功夫・水果", prices: { 'L': 60 }, notes: "不含茶, 無外加糖", noSugarOptions: true, canAddToppings: true },
+          { name: "黃金芒果莎莎", category: "功夫・水果", prices: { 'L': 60 }, notes: "不含茶, 冰沙", fixedOptions: { sugar: "", ice: "冰沙" }, noSugarOptions: true, canAddToppings: false },
+          { name: "泰式榴槤莎莎", category: "功夫・水果", prices: { 'L': 110 }, notes: "★ 中杯限定, 冰沙", fixedOptions: { sugar: "", ice: "冰沙" }, noSugarOptions: true, canAddToppings: false },
+
+          // 冬季・限定
+          { name: "暖薑奶茶", category: "冬季・限定", prices: { 'L': 60 }, canAddToppings: true },
+          { name: "暖薑鮮奶", category: "冬季・限定", prices: { 'L': 70 }, notes: "不含茶", canAddToppings: true },
+          { name: "薑汁桂圓紅棗", category: "冬季・限定", prices: { 'L': 60 }, notes: "不含茶, 無外加糖", noSugarOptions: true, canAddToppings: true },
+        ];
+
+        // 全域變數
+        let currentOrder = [];
+        let currentBeverage = null;
+        let savedOrders = JSON.parse(localStorage.getItem('kungfuTeaOrders') || '[]');
+
+        // DOM 元素
+        const menuContainer = document.getElementById('menu-container');
+        const orderContainer = document.getElementById('order-container');
+        const totalAmountEl = document.getElementById('total-amount');
+        const orderPreview = document.getElementById('order-preview');
+        const copyOrderBtn = document.getElementById('copy-order');
+        const sendOrderBtn = document.getElementById('send-order');
+        const clearOrderBtn = document.getElementById('clear-order');
+        const saveOrderBtn = document.getElementById('save-order');
+        const loadOrdersBtn = document.getElementById('load-orders');
+        const modal = document.getElementById('order-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const sizeOptions = document.getElementById('size-options');
+        const quantityInput = document.getElementById('quantity');
+        const addToOrderBtn = document.getElementById('add-to-order');
+        const cancelOrderBtn = document.getElementById('cancel-order');
+
+        // 訂購資訊輸入框
+        const customerName = document.getElementById('customer-name');
+        const customerPhone = document.getElementById('customer-phone');
+        const deliveryAddress = document.getElementById('delivery-address');
+        const deliveryTime = document.getElementById('delivery-time');
+        const deliveryTimeUnit = document.getElementById('delivery-time-unit');
+        const BACKEND_API_URL = (window.KUNGFU_TEA_BACKEND_API_URL || 'http://localhost:3000/api').trim();
+
+        // 初始化菜單
+        function initMenu() {
+          const categories = [...new Set(menuData.map(item => item.category))];
+
+          categories.forEach(category => {
+            const categoryDropdown = document.createElement('div');
+            categoryDropdown.className = 'category-dropdown';
+
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'category-header';
+            categoryHeader.innerHTML = `
+                    ${category}
+                    <span class="dropdown-arrow">▼</span>
+                `;
+
+            const categoryContent = document.createElement('div');
+            categoryContent.className = 'category-content';
+
+            // 創建該分類下的飲品
+            const categoryItems = menuData.filter(item => item.category === category);
+            categoryItems.forEach(beverage => {
+              const beverageEl = createBeverageElement(beverage);
+              categoryContent.appendChild(beverageEl);
+            });
+
+            // 點擊標題切換展開/收起
+            categoryHeader.addEventListener('click', () => {
+              const arrow = categoryHeader.querySelector('.dropdown-arrow');
+              const isActive = categoryContent.classList.contains('active');
+
+              if (isActive) {
+                categoryContent.classList.remove('active');
+                arrow.classList.remove('rotated');
+              } else {
+                categoryContent.classList.add('active');
+                arrow.classList.add('rotated');
+              }
+            });
+
+            categoryDropdown.appendChild(categoryHeader);
+            categoryDropdown.appendChild(categoryContent);
+            menuContainer.appendChild(categoryDropdown);
+          });
+        }
+
+        // 創建飲品元素
+        function createBeverageElement(beverage) {
+          const beverageEl = document.createElement('div');
+          beverageEl.className = 'beverage-item';
+          beverageEl.onclick = () => openOrderModal(beverage);
+
+          const pricesText = Object.entries(beverage.prices)
+            .map(([size, price]) => `${size} $${price}`)
+            .join(' / ');
+
+          let notesHtml = '';
+          if (beverage.notes) {
+            // 移除備註中的星星圖示，因為已經移到名稱前面
+            const cleanNotes = beverage.notes.replace(/★\s*/g, '');
+            if (cleanNotes.trim()) {
+              // 根據備註內容決定樣式類別
+              let noteClass = 'beverage-notes';
+              if (cleanNotes.includes('推薦')) {
+                noteClass += ' recommended';
+              } else if (cleanNotes.includes('不可加料')) {
+                noteClass += ' no-toppings';
+              } else if (cleanNotes.includes('無另外加糖') || cleanNotes.includes('無糖')) {
+                noteClass += ' no-sugar';
+              } else if (cleanNotes.includes('不含茶')) {
+                noteClass += ' no-tea';
+              } else if (cleanNotes.includes('甜度固定') || cleanNotes.includes('固定')) {
+                noteClass += ' fixed-options';
+              } else if (cleanNotes.includes('最低微冰')) {
+                noteClass += ' ice-limit';
+              } else if (cleanNotes.includes('不含咖啡因')) {
+                noteClass += ' no-caffeine';
+              } else if (cleanNotes.includes('含') && (cleanNotes.includes('波霸') || cleanNotes.includes('蒟蒻') || cleanNotes.includes('仙草'))) {
+                noteClass += ' included-toppings';
+              } else if (cleanNotes.includes('冰沙')) {
+                noteClass += ' smoothie';
+              } else if (cleanNotes.includes('限定')) {
+                noteClass += ' limited';
+              } else if (cleanNotes.includes('不可做熱飲')) {
+                noteClass += ' no-hot';
+              } else if (cleanNotes.includes('黃金比例')) {
+                noteClass += ' golden-ratio';
+              }
+
+              notesHtml = `<div class="${noteClass}">${cleanNotes}</div>`;
+            }
+          }
+
+          // 處理星星圖示
+          let displayName = beverage.name;
+          if (beverage.notes && beverage.notes.includes('★')) {
+            displayName = `<span class="star">★</span> ${beverage.name}`;
+          }
+
+          beverageEl.innerHTML = `
+            <div class="beverage-name-price">
+                <div class="beverage-name-text">${displayName}</div>
+                <div class="beverage-price-text">${pricesText}</div>
+            </div>
+            ${notesHtml}
+        `;
+
+          return beverageEl;
+        }
+
+        // 可愛提醒函數
+        function showCuteAlert(title, message, icon = '😊', details = null) {
+          const alertModal = document.getElementById('cute-alert');
+          const alertTitle = document.getElementById('alert-title');
+          const alertMessage = document.getElementById('alert-message');
+          const alertIcon = document.getElementById('alert-icon');
+          const alertDetails = document.getElementById('alert-details');
+          const missingFields = document.getElementById('missing-fields');
+          const okBtn = document.getElementById('alert-ok-btn');
+
+          alertTitle.textContent = title;
+          alertMessage.textContent = message;
+          alertIcon.textContent = icon;
+
+          if (details) {
+            alertDetails.style.display = 'block';
+            missingFields.innerHTML = details;
+          } else {
+            alertDetails.style.display = 'none';
+          }
+
+          alertModal.style.display = 'block';
+
+          // 點擊確定按鈕關閉
+          okBtn.onclick = () => {
+            alertModal.style.display = 'none';
+          };
+
+          // 點擊背景關閉
+          alertModal.onclick = (e) => {
+            if (e.target === alertModal) {
+              alertModal.style.display = 'none';
+            }
+          };
+        }
+
+        // 檢查訂購資訊是否完整
+        function checkOrderInfo() {
+          const name = customerName.value.trim();
+          const phone = customerPhone.value.trim();
+          const address = deliveryAddress.value.trim();
+          const time = deliveryTime.value;
+          const timeUnit = deliveryTimeUnit.value;
+
+          // 先驗證時間是否在有效範圍內
+          if (time && !validateDeliveryTime()) {
+            deliveryTime.focus();
+            return false;
+          }
+
+          if (!name || !phone || !address || !time) {
+            // 直接跳轉到訂購人姓名欄位
+            customerName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            customerName.focus();
+
+            // 高亮顯示未填寫的欄位
+            const missingFields = [];
+            if (!name) {
+              customerName.style.borderColor = '#ff6b6b';
+              missingFields.push('👤 訂購人姓名');
+            }
+            if (!phone) {
+              customerPhone.style.borderColor = '#ff6b6b';
+              missingFields.push('📞 聯絡電話');
+            }
+            if (!address) {
+              deliveryAddress.style.borderColor = '#ff6b6b';
+              missingFields.push('📍 外送地址');
+            }
+            if (!time) {
+              deliveryTime.style.borderColor = '#ff6b6b';
+              missingFields.push('⏰ 希望送達時間');
+            }
+
+            const detailsHtml = missingFields.map(field => `<div style="margin: 5px 0; color: #e74c3c;">${field}</div>`).join('');
+
+            showCuteAlert(
+              '請先填寫訂購資訊！',
+              '親愛的顧客，請先填寫完整的訂購資訊後再選擇飲品哦～',
+              '🤗',
+              detailsHtml
+            );
+            return false;
+          }
+          return true;
+        }
+
+        // 打開訂購模態框
+        function openOrderModal(beverage) {
+          // 先檢查訂購資訊
+          if (!checkOrderInfo()) {
+            return;
+          }
+
+          currentBeverage = beverage;
+          modalTitle.textContent = beverage.name;
+
+          // 創建尺寸選項
+          sizeOptions.innerHTML = '';
+          const sizes = Object.keys(beverage.prices);
+
+          sizes.forEach((size, index) => {
+            const sizeBtn = document.createElement('div');
+            sizeBtn.className = 'option-btn';
+            if (index === 0) sizeBtn.classList.add('selected');
+            sizeBtn.textContent = `${size} (${beverage.prices[size]})`;
+            sizeBtn.onclick = () => selectOption(sizeBtn, 'size');
+            sizeOptions.appendChild(sizeBtn);
+          });
+
+          // 處理甜度選項
+          const sugarGroup = document.getElementById('sugar-group');
+          if (beverage.fixedOptions?.sugar || beverage.noSugarOptions) {
+            sugarGroup.style.display = 'none';
+          } else {
+            sugarGroup.style.display = 'block';
+            resetSugarSelections();
+          }
+
+          // 處理冰塊選項
+          const iceGroup = document.getElementById('ice-group');
+          if (beverage.fixedOptions?.ice) {
+            iceGroup.style.display = 'none';
+          } else {
+            iceGroup.style.display = 'block';
+            // 特殊處理：冰淇淋飲品只顯示微冰以上選項
+            if (beverage.name === '冰淇淋岩葉紅茶' || beverage.name === '冰淇淋紅茶拿鐵') {
+              resetIceSelectionsForIceCream();
+            } else if (beverage.name === '阿里山冰茶' || beverage.name === '日月潭紅玉') {
+              resetIceSelectionsNoHot();
+            } else if (beverage.name === '紅豆粉粿鮮奶') {
+              resetIceSelectionsForRedBean();
+            } else {
+              resetIceSelections();
+            }
+          }
+
+          // 處理茶品選項
+          const teaGroup = document.getElementById('tea-group');
+          if (beverage.teaOptions) {
+            teaGroup.style.display = 'block';
+            createTeaOptions();
+          } else {
+            teaGroup.style.display = 'none';
+          }
+
+          // 處理加料選項
+          const toppingsGroup = document.getElementById('toppings-group');
+          if (beverage.canAddToppings) {
+            toppingsGroup.style.display = 'block';
+            createToppingsOptions();
+          } else {
+            toppingsGroup.style.display = 'none';
+          }
+
+          quantityInput.value = 1;
+          modal.style.display = 'block';
+        }
+
+        // 創建茶品選項
+        function createTeaOptions() {
+          const teaContainer = document.getElementById('tea-options');
+          teaContainer.innerHTML = '';
+
+          currentBeverage.teaOptions.forEach((tea, index) => {
+            const teaBtn = document.createElement('div');
+            teaBtn.className = 'option-btn';
+            if (index === 0) teaBtn.classList.add('selected');
+            teaBtn.textContent = tea;
+            teaBtn.dataset.teaValue = tea;
+            teaBtn.onclick = () => selectOption(teaBtn, 'tea');
+            teaContainer.appendChild(teaBtn);
+          });
+        }
+
+        // 創建加料選項
+        function createToppingsOptions() {
+          const toppingsContainer = document.getElementById('toppings-options');
+          toppingsContainer.innerHTML = '';
+
+          toppings.forEach(topping => {
+            const toppingBtn = document.createElement('div');
+            toppingBtn.className = 'option-btn';
+            toppingBtn.textContent = `${topping.name} (+${topping.price})`;
+            toppingBtn.dataset.toppingName = topping.name;
+            toppingBtn.dataset.toppingPrice = topping.price;
+            toppingBtn.onclick = () => toggleTopping(toppingBtn);
+            toppingsContainer.appendChild(toppingBtn);
+          });
+        }
+
+        // 關閉訂購模態框
+        function closeOrderModal() {
+          modal.style.display = 'none';
+          currentBeverage = null;
+        }
+
+        // 加入訂單
+        function addToOrder() {
+          if (!currentBeverage) return;
+
+          const selectedSize = document.querySelector('#size-options .option-btn.selected');
+          const selectedSugar = document.querySelector('#sugar-options .option-btn.selected');
+          const selectedIce = document.querySelector('#ice-options .option-btn.selected');
+          const selectedTea = document.querySelector('#tea-options .option-btn.selected');
+          const selectedToppings = document.querySelectorAll('#toppings-options .option-btn.selected');
+          const quantity = parseInt(quantityInput.value) || 1;
+
+          if (!selectedSize) {
+            showCuteAlert('請選擇尺寸！', '請選擇飲品尺寸後再加入訂單哦～', '😊');
+            return;
+          }
+
+          // 構建訂單項目
+          const orderItem = {
+            beverage: currentBeverage,
+            size: selectedSize.textContent.split(' (')[0],
+            quantity: quantity,
+            price: 0
+          };
+
+          // 添加選項
+          if (selectedSugar && sugarGroup.style.display !== 'none') {
+            orderItem.sugar = selectedSugar.dataset.value;
+          }
+          if (selectedIce && iceGroup.style.display !== 'none') {
+            orderItem.ice = selectedIce.dataset.value;
+          }
+          if (selectedTea && teaGroup.style.display !== 'none') {
+            orderItem.tea = selectedTea.dataset.teaValue;
+          }
+
+          // 添加加料
+          if (selectedToppings.length > 0 && toppingsGroup.style.display !== 'none') {
+            orderItem.toppings = Array.from(selectedToppings).map(btn => btn.dataset.toppingName);
+          }
+
+          // 計算價格
+          const basePrice = currentBeverage.prices[orderItem.size];
+          let toppingsPrice = 0;
+          if (orderItem.toppings) {
+            orderItem.toppings.forEach(toppingName => {
+              const topping = toppings.find(t => t.name === toppingName);
+              if (topping) {
+                toppingsPrice += topping.price;
+              }
+            });
+          }
+          orderItem.price = (basePrice + toppingsPrice) * quantity;
+
+          // 添加到訂單
+          currentOrder.push(orderItem);
+
+          // 更新顯示
+          updateOrderDisplay();
+          updateOrderPreview();
+
+          // 關閉模態框
+          closeOrderModal();
+
+          // 顯示成功訊息
+          showCuteAlert('已加入訂單！', `${currentBeverage.name} 已成功加入您的訂單中～`, '🎉');
+        }
+
+        // 選擇選項
+        function selectOption(btn, type) {
+          const parentContainer = btn.parentNode;
+          parentContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        }
+
+        // 切換加料選擇
+        function toggleTopping(btn) {
+          const isSelected = btn.classList.contains('selected');
+          const toppingName = btn.dataset.toppingName;
+          const selectedToppings = document.querySelectorAll('#toppings-options .option-btn.selected');
+
+          // 如果點擊的是38料
+          if (toppingName === '38料') {
+            if (isSelected) {
+              // 取消選擇38料
+              btn.classList.remove('selected');
+            } else {
+              // 選擇38料時，取消所有其他加料
+              selectedToppings.forEach(otherBtn => otherBtn.classList.remove('selected'));
+              btn.classList.add('selected');
+            }
+          } else {
+            // 如果點擊的是其他加料
+            if (isSelected) {
+              // 取消選擇
+              btn.classList.remove('selected');
+            } else {
+              // 檢查是否已經選了38料
+              const specialTopping = document.querySelector('#toppings-options .option-btn[data-topping-name="38料"]');
+              if (specialTopping && specialTopping.classList.contains('selected')) {
+                showCuteAlert(
+                  '加料提醒！',
+                  '選擇38料時不能同時選擇其他加料哦～',
+                  '⚠️'
+                );
+                return;
+              }
+
+              // 檢查是否已達到3種加料的限制
+              if (selectedToppings.length >= 3) {
+                showCuteAlert(
+                  '加料限制！',
+                  '一杯飲料最多只能加3種料哦～',
+                  '🚫'
+                );
+                return;
+              }
+
+              btn.classList.add('selected');
+            }
+          }
+        }
+
+        // 選擇選項 (尺寸、甜度、冰塊) - 已在上方定義
+
+        // 重置甜度選項
+        function resetSugarSelections() {
+          document.querySelectorAll('#sugar-options .option-btn').forEach((btn, index) => {
+            btn.classList.toggle('selected', index === 0);
+          });
+        }
+
+        // 重置冰塊選項
+        function resetIceSelections() {
+          document.querySelectorAll('#ice-options .option-btn').forEach((btn, index) => {
+            btn.style.display = 'block'; // 確保所有選項都顯示
+            btn.classList.toggle('selected', index === 0);
+          });
+        }
+
+        // 重置冰淇淋飲品的冰塊選項（只顯示微冰以上）
+        function resetIceSelectionsForIceCream() {
+          const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+          iceOptions.forEach((btn, index) => {
+            const value = btn.dataset.value;
+            // 只顯示微冰、少冰、正冰，隱藏去冰和熱飲
+            if (value === '去冰' || value === '熱飲') {
+              btn.style.display = 'none';
+            } else {
+              btn.style.display = 'block';
+              btn.classList.toggle('selected', index === 0);
+            }
+          });
+        }
+
+        // 重置不能做熱飲的飲品冰塊選項（隱藏熱飲選項）
+        function resetIceSelectionsNoHot() {
+          const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+          iceOptions.forEach((btn, index) => {
+            const value = btn.dataset.value;
+            // 隱藏熱飲選項，其他都顯示
+            if (value === '熱飲') {
+              btn.style.display = 'none';
+            } else {
+              btn.style.display = 'block';
+              btn.classList.toggle('selected', index === 0);
+            }
+          });
+        }
+
+        // 重置紅豆粉粿鮮奶的冰塊選項（固定微冰）
+        function resetIceSelectionsForRedBean() {
+          const iceOptions = document.querySelectorAll('#ice-options .option-btn');
+          iceOptions.forEach((btn, index) => {
+            const value = btn.dataset.value;
+            // 固定微冰，只顯示微冰
+            if (value === '微冰') {
+              btn.style.display = 'block';
+              btn.classList.add('selected');
+            } else {
+              btn.style.display = 'none';
+              btn.classList.remove('selected');
+            }
+          });
+        }
+
+        // 加入訂單
+        addToOrderBtn.onclick = () => {
+          const selectedSizeBtn = document.querySelector('#size-options .option-btn.selected');
+          const sizeText = selectedSizeBtn.textContent;
+          const size = sizeText.split(' ')[0];
+          const quantity = parseInt(quantityInput.value);
+
+          if (quantity <= 0) {
+            showCuteAlert(
+              '數量錯誤！',
+              '數量必須大於 0 哦～',
+              '❌'
+            );
+            return;
+          }
+
+          // 處理甜度選項
+          let sugar = "全糖";
+          if (currentBeverage.fixedOptions?.sugar) {
+            sugar = currentBeverage.fixedOptions.sugar;
+          } else if (currentBeverage.noSugarOptions) {
+            sugar = ""; // 不顯示甜度
+          } else {
+            const selectedSugarBtn = document.querySelector('#sugar-options .option-btn.selected');
+            if (selectedSugarBtn) {
+              sugar = selectedSugarBtn.dataset.value;
+            }
+          }
+
+          // 處理冰塊選項
+          let ice = "正冰";
+          if (currentBeverage.fixedOptions?.ice) {
+            ice = currentBeverage.fixedOptions.ice;
+          } else {
+            const selectedIceBtn = document.querySelector('#ice-options .option-btn.selected');
+            if (selectedIceBtn) {
+              ice = selectedIceBtn.dataset.value;
+            }
+          }
+
+          // 處理茶品選項
+          let selectedTea = '';
+          if (currentBeverage.teaOptions) {
+            const selectedTeaBtn = document.querySelector('#tea-options .option-btn.selected');
+            if (selectedTeaBtn) {
+              selectedTea = selectedTeaBtn.dataset.teaValue;
+            }
+          }
+
+          // 處理加料選項
+          const selectedToppings = [];
+          let toppingsPrice = 0;
+          if (currentBeverage.canAddToppings) {
+            document.querySelectorAll('#toppings-options .option-btn.selected').forEach(btn => {
+              const toppingName = btn.dataset.toppingName;
+              const toppingPrice = parseInt(btn.dataset.toppingPrice);
+              selectedToppings.push(toppingName);
+              toppingsPrice += toppingPrice;
+            });
+          }
+
+          const basePrice = currentBeverage.prices[size];
+          const totalPrice = (basePrice + toppingsPrice) * quantity;
+
+          const orderItem = {
+            beverage: currentBeverage,
+            size: size,
+            sugar: sugar,
+            ice: ice,
+            tea: selectedTea,
+            toppings: selectedToppings,
+            quantity: quantity,
+            price: totalPrice
+          };
+
+          currentOrder.push(orderItem);
+          updateOrderDisplay();
+          updateOrderPreview();
+          modal.style.display = 'none';
+        };
+
+        // 取消訂購
+        cancelOrderBtn.onclick = () => {
+          modal.style.display = 'none';
+        };
+
+        // 更新訂單顯示
+        function updateOrderDisplay() {
+          if (currentOrder.length === 0) {
+            orderContainer.innerHTML = '<div class="empty-order">尚未選擇任何飲品</div>';
+          } else {
+            orderContainer.innerHTML = '';
+            currentOrder.forEach((item, index) => {
+              const orderItemEl = createOrderItemElement(item, index);
+              orderContainer.appendChild(orderItemEl);
+            });
+          }
+
+          // 更新總金額
+          const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+          totalAmountEl.textContent = total;
+
+          // 更新免運提醒（如果外送地址已填寫）
+          const deliveryAddress = document.getElementById('delivery-address');
+          if (deliveryAddress && deliveryAddress.value.trim().length > 5) {
+            const distanceResult = document.getElementById('distance-result');
+            if (distanceResult && distanceResult.style.display !== 'none') {
+              // 重新計算距離以獲取最新的外送級別
+              useBackupDistanceCalculation(deliveryAddress.value.trim());
+            }
+          }
+        }
+
+        // 創建訂單項目元素
+        function createOrderItemElement(item, index) {
+          const orderItemEl = document.createElement('div');
+          orderItemEl.className = 'order-item';
+
+          // 組合甜度冰塊茶品文字
+          let optionsText = '';
+          const options = [];
+          if (item.tea) options.push(item.tea);
+          if (item.sugar) options.push(item.sugar);
+          if (item.ice) options.push(item.ice);
+          optionsText = options.join(' / ');
+
+          // 加料文字
+          let toppingsText = '';
+          if (item.toppings && item.toppings.length > 0) {
+            const displayToppings = item.toppings.map(toppingName => {
+              const topping = toppings.find(t => t.name === toppingName);
+              return topping ? topping.displayName : toppingName;
+            });
+            toppingsText = `<div style="color: var(--kt-primary); font-size: 0.8rem;">加料: ${displayToppings.join(', ')}</div>`;
+          }
+
+          orderItemEl.innerHTML = `
+                <div class="order-item-header">
+                    <span class="order-item-name">${item.beverage.name} (${item.size})</span>
+                    <span class="order-item-price">$${item.price}</span>
+                </div>
+                <div class="order-item-details">
+                    <span>${optionsText}</span>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity(${index}, -1)">−</button>
+                        <span class="quantity-display">${item.quantity}</span>
+                        <button class="quantity-btn" onclick="changeQuantity(${index}, 1)">+</button>
+                    </div>
+                </div>
+                ${toppingsText}
+            `;
+
+          return orderItemEl;
+        }
+
+        // 改變數量
+        function changeQuantity(index, change) {
+          const item = currentOrder[index];
+          item.quantity += change;
+
+          if (item.quantity <= 0) {
+            currentOrder.splice(index, 1);
+          } else {
+            // 重新計算價格
+            const basePrice = item.beverage.prices[item.size];
+            let toppingsPrice = 0;
+            if (item.toppings) {
+              item.toppings.forEach(toppingName => {
+                const topping = toppings.find(t => t.name === toppingName);
+                if (topping) {
+                  toppingsPrice += topping.price;
+                }
+              });
+            }
+            item.price = (basePrice + toppingsPrice) * item.quantity;
+          }
+
+          updateOrderDisplay();
+          updateOrderPreview();
+        }
+
+        // 更新訂單預覽
+        function updateOrderPreview() {
+          const name = customerName.value.trim();
+          const phone = customerPhone.value.trim();
+          const address = deliveryAddress.value.trim();
+          const time = deliveryTime.value;
+          const timeUnit = deliveryTimeUnit.value;
+
+          if (!name || !phone || !address || !time || currentOrder.length === 0) {
+            orderPreview.textContent = '請先填寫完整的訂購資訊和選擇飲品...';
+            copyOrderBtn.disabled = true;
+            sendOrderBtn.disabled = true;
+            return;
+          }
+
+          const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+          const orderTime = new Date().toLocaleString('zh-TW');
+
+          // 組合時間和單位顯示
+          let deliveryTimeText = time;
+          if (time && timeUnit) {
+            deliveryTimeText = `${time}${timeUnit}`;
+          }
+
+          let previewText = `🧋 功夫茶 KUNG FU TEA 訂單\n`;
+          previewText += `================\n`;
+          previewText += `📅 訂購時間：${orderTime}\n`;
+          previewText += `👤 訂購人：${name}\n`;
+          previewText += `📞 聯絡電話：${phone}\n`;
+          previewText += `📍 外送地址：${address}\n`;
+          previewText += `⏰ 希望送達時間：${deliveryTimeText}\n`;
+          previewText += `================\n`;
+          previewText += `📋 訂購內容：\n\n`;
+
+          currentOrder.forEach((item, index) => {
+            let orderLine = `${index + 1}. ${item.beverage.name} ${item.size}`;
+
+            // 添加茶品甜度冰塊資訊
+            const options = [];
+            if (item.tea) options.push(item.tea);
+            if (item.sugar) options.push(item.sugar);
+            if (item.ice) options.push(item.ice);
+            if (options.length > 0) {
+              orderLine += ` ${options.join('')}`;
+            }
+
+            // 添加加料資訊
+            if (item.toppings && item.toppings.length > 0) {
+              const displayToppings = item.toppings.map(toppingName => {
+                const topping = toppings.find(t => t.name === toppingName);
+                return topping ? topping.displayName : toppingName;
+              });
+              orderLine += ` +${displayToppings.join('+')}`;
+            }
+
+            orderLine += ` ×${item.quantity} 計：${item.price}`;
+            previewText += orderLine + '\n';
+          });
+
+          previewText += `\n================\n`;
+
+          // 添加免運條件和運費信息
+          const deliveryLevel = getCurrentDeliveryLevel();
+          if (deliveryLevel) {
+            const freeShippingAmount = deliveryLevel.freeShipping;
+            const deliveryFee = deliveryLevel.fee;
+
+            if (total >= freeShippingAmount) {
+              // 已達成免運條件
+              previewText += `🎉 免運條件：已達成 (滿$${freeShippingAmount}免運)\n`;
+              previewText += `💰 訂單金額：$${total}\n`;
+              previewText += `🚚 運費：免運 ✓\n`;
+              previewText += `💳 總計：$${total}\n`;
+            } else {
+              // 未達成免運條件
+              const remainingAmount = freeShippingAmount - total;
+              previewText += `📊 免運條件：滿$${freeShippingAmount}免運\n`;
+              previewText += `💰 訂單金額：$${total}\n`;
+              previewText += `🎯 還差：$${remainingAmount} 達成免運\n`;
+              previewText += `🚚 運費：$${deliveryFee}\n`;
+              previewText += `💳 總計：$${total + deliveryFee}\n`;
+            }
+          } else {
+            // 沒有外送地址信息
+            previewText += `💰 訂單金額：$${total}\n`;
+            previewText += `⚠️ 請填寫外送地址以查看運費資訊\n`;
+          }
+
+          previewText += `================\n`;
+          previewText += `\n謝謝店家 麻煩幫我${deliveryTimeText}送達 🙏`;
+          previewText += `\n\n================`;
+          previewText += `\n📢 重要提醒：`;
+          previewText += `\n• 發送此訂單訊息後，請立即撥打官方LINE確認`;
+          previewText += `\n• 確認店家收到訂單並回覆後，才算訂購成功`;
+          previewText += `\n• 如有任何問題，請直接聯繫店家`;
+          previewText += `\n• 感謝您的訂購，祝您用餐愉快！`;
+
+          orderPreview.textContent = previewText;
+          copyOrderBtn.disabled = false;
+          sendOrderBtn.disabled = false;
+        }
+
+        // 複製訂單文字
+        copyOrderBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(orderPreview.textContent);
+            copyOrderBtn.textContent = '✅ 已複製！';
+            setTimeout(() => {
+              copyOrderBtn.textContent = '📋 複製訂單文字後點擊下方↓';
+            }, 2000);
+          } catch (err) {
+            // 備用複製方法
+            const textArea = document.createElement('textarea');
+            textArea.value = orderPreview.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            copyOrderBtn.textContent = '✅ 已複製！';
+            setTimeout(() => {
+              copyOrderBtn.textContent = '📋 複製訂單文字後點擊下方↓';
+            }, 2000);
+          }
+        };
+
+        function buildBackendOrderPayload() {
+          const name = customerName.value.trim();
+          const phone = customerPhone.value.trim();
+          const address = deliveryAddress.value.trim();
+          const notes = `希望送達時間：${deliveryTime.value}${deliveryTimeUnit.value}`;
+          const subtotal = currentOrder.reduce((sum, item) => sum + Number(item.price || 0), 0);
+          const deliveryLevel = getCurrentDeliveryLevel();
+          const deliveryFee = deliveryLevel && subtotal < deliveryLevel.freeShipping ? deliveryLevel.fee : 0;
+          const total = subtotal + deliveryFee;
+
+          const items = currentOrder.map(item => {
+            const quantity = Number(item.quantity || 1);
+            const lineTotal = Number(item.price || 0);
+            const unitPrice = quantity > 0 ? Math.round(lineTotal / quantity) : lineTotal;
+            const optionParts = [item.sugar, item.ice, item.tea].filter(Boolean);
+            if (item.toppings && item.toppings.length > 0) {
+              optionParts.push(`加料:${item.toppings.join('+')}`);
+            }
+            const optionText = optionParts.length ? `（${optionParts.join(' / ')}）` : '';
+
+            return {
+              name: `${item.beverage.name}${optionText}`,
+              size: item.size || 'L',
+              price: unitPrice,
+              quantity: quantity,
+              total: lineTotal
+            };
+          });
+
+          return {
+            customer: {
+              name,
+              phone,
+              method: 'delivery',
+              address,
+              notes
+            },
+            items,
+            total,
+            status: 'pending'
+          };
+        }
+
+        // 送單到後台（共用：POST 並回傳結果）
+        async function syncOrderToBackend() {
+          const response = await fetch(`${BACKEND_API_URL}/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(buildBackendOrderPayload())
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || `HTTP ${response.status}`);
+          }
+          return result;
+        }
+
+        // 發送給 LINE 官方（背景同步後台，不顯示同步成功提示）
+        sendOrderBtn.onclick = async () => {
+          if (currentOrder.length === 0) {
+            showCuteAlert('訂單為空！', '請先加入飲品再送出訂單～', '📝');
+            return;
+          }
+          if (!checkOrderInfo()) return;
+
+          const originalText = sendOrderBtn.textContent;
+          sendOrderBtn.disabled = true;
+          sendOrderBtn.textContent = '⏳ 開啟中...';
+
+          try {
+            await syncOrderToBackend();
+          } catch (error) {
+            showCuteAlert('後台同步失敗', `無法同步到後台：${error.message}\n仍會開啟 LINE 送單。`, '⚠️');
+          } finally {
+            sendOrderBtn.disabled = false;
+            sendOrderBtn.textContent = originalText;
+          }
+
+          const orderText = encodeURIComponent(orderPreview.textContent);
+          const lineUrl = `https://lin.ee/QmyIa34?text=${orderText}`;
+          window.open(lineUrl, '_blank');
+        };
+
+        // 儲存訂單
+        saveOrderBtn.onclick = () => {
+          if (currentOrder.length === 0) {
+            showCuteAlert(
+              '訂單為空！',
+              '訂單是空的，無法儲存哦～',
+              '📝'
+            );
+            return;
+          }
+
+          const name = customerName.value.trim();
+          const phone = customerPhone.value.trim();
+          const address = deliveryAddress.value.trim();
+          const time = deliveryTime.value;
+          const timeUnit = deliveryTimeUnit.value;
+
+          if (!name || !phone || !address || !time) {
+            showCuteAlert(
+              '請先填寫訂購資訊！',
+              '請先填寫完整的訂購資訊後再儲存哦～',
+              '📋'
+            );
+            return;
+          }
+
+          const orderData = {
+            id: Date.now(),
+            name: name,
+            phone: phone,
+            address: address,
+            deliveryTime: time,
+            deliveryTimeUnit: timeUnit,
+            items: [...currentOrder],
+            total: currentOrder.reduce((sum, item) => sum + item.price, 0),
+            saveTime: new Date().toLocaleString('zh-TW')
+          };
+
+          // 檢查是否超過10個訂單
+          if (savedOrders.length >= 10) {
+            if (confirm('已儲存10個訂單，是否要覆蓋最舊的訂單？')) {
+              savedOrders.shift(); // 移除最舊的訂單
+            } else {
+              return;
+            }
+          }
+
+          savedOrders.push(orderData);
+          localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+
+          showCuteAlert(
+            '儲存成功！',
+            `訂單已儲存！\n訂單編號: ${orderData.id}\n儲存時間: ${orderData.saveTime}`,
+            '✅'
+          );
+          updateLoadOrdersButton();
+        };
+
+        // 載入訂單列表
+        loadOrdersBtn.onclick = () => {
+          if (savedOrders.length === 0) {
+            showCuteAlert(
+              '沒有儲存的訂單！',
+              '目前沒有儲存的訂單哦～',
+              '📭'
+            );
+            return;
+          }
+
+          // 創建訂單選擇模態框
+          const orderModal = document.createElement('div');
+          orderModal.className = 'modal';
+          orderModal.style.display = 'block';
+          orderModal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <h3 class="modal-title">選擇要載入的訂單</h3>
+                    <div class="orders-list" style="max-height: 400px; overflow-y: auto;">
+                        ${savedOrders.map((order, index) => `
+                            <div class="order-item-select" data-order-id="${order.id}">
+                                <div class="order-item-header">
+                                    <span>訂單 #${order.id}</span>
+                                    <span class="price">$${order.total}</span>
+                                </div>
+                                <div class="order-item-details">
+                                    <div>
+                                        <strong>${order.name}</strong><br>
+                                        📞 ${order.phone}<br>
+                                        📍 ${order.address}
+                                    </div>
+                                    <div class="order-actions">
+                                        <button class="btn btn-primary load-order-btn" data-order-id="${order.id}">載入</button>
+                                        <button class="btn btn-secondary delete-order-btn" data-order-id="${order.id}">刪除</button>
+                                    </div>
+                                </div>
+                                <div style="color: var(--kt-text-muted); font-size: 0.8rem; margin-top: 5px;">
+                                    儲存時間: ${order.saveTime}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="btn btn-secondary" id="clear-all-orders">清空所有訂單</button>
+                        <button class="btn btn-secondary" id="close-orders-modal">關閉</button>
+                    </div>
+                </div>
+            `;
+
+          document.body.appendChild(orderModal);
+
+          // 添加樣式
+          const style = document.createElement('style');
+          style.textContent = `
+                .order-item-select {
+                    background: #f8f9ff;
+                    border: 1px solid var(--kt-border);
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                .order-item-select:hover {
+                    border-color: var(--kt-primary);
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+                }
+                .order-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .order-actions .btn {
+                    padding: 8px 12px;
+                    font-size: 0.9rem;
+                }
+            `;
+          document.head.appendChild(style);
+
+          // 載入訂單
+          orderModal.querySelectorAll('.load-order-btn').forEach(btn => {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              const orderId = parseInt(btn.dataset.orderId);
+              const order = savedOrders.find(order => order.id === orderId);
+              if (order) {
+                customerName.value = order.name;
+                customerPhone.value = order.phone;
+                deliveryAddress.value = order.address;
+                deliveryTime.value = order.deliveryTime || '';
+                deliveryTimeUnit.value = order.deliveryTimeUnit || '整';
+                currentOrder = [...order.items];
+                updateOrderDisplay();
+                updateOrderPreview();
+                document.body.removeChild(orderModal);
+                document.head.removeChild(style);
+                showCuteAlert(
+                  '載入成功！',
+                  '訂單已載入！',
+                  '🎉'
+                );
+              }
+            };
+          });
+
+          // 刪除訂單
+          orderModal.querySelectorAll('.delete-order-btn').forEach(btn => {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              if (confirm('確定要刪除這個訂單嗎？')) {
+                const orderId = parseInt(btn.dataset.orderId);
+                const orderIndex = savedOrders.findIndex(order => order.id === orderId);
+                if (orderIndex !== -1) {
+                  savedOrders.splice(orderIndex, 1);
+                  localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+                  // 重新載入模態框
+                  document.body.removeChild(orderModal);
+                  document.head.removeChild(style);
+                  loadOrdersBtn.click();
+                }
+              }
+            };
+          });
+
+          // 清空所有訂單
+          orderModal.querySelector('#clear-all-orders').onclick = () => {
+            if (confirm('確定要清空所有儲存的訂單嗎？')) {
+              savedOrders = [];
+              localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+              document.body.removeChild(orderModal);
+              document.head.removeChild(style);
+              updateLoadOrdersButton();
+              showCuteAlert(
+                '清空完成！',
+                '所有訂單已清空！',
+                '🗑️'
+              );
+            }
+          };
+
+          // 關閉模態框
+          orderModal.querySelector('#close-orders-modal').onclick = () => {
+            document.body.removeChild(orderModal);
+            document.head.removeChild(style);
+          };
+
+          // 點擊模態框外部關閉
+          orderModal.onclick = (e) => {
+            if (e.target === orderModal) {
+              document.body.removeChild(orderModal);
+              document.head.removeChild(style);
+            }
+          };
+        };
+
+        // 更新載入訂單按鈕文字
+        function updateLoadOrdersButton() {
+          loadOrdersBtn.textContent = `📋 載入訂單 (${savedOrders.length}/10)`;
+        }
+
+        // 清空訂單
+        clearOrderBtn.onclick = () => {
+          if (currentOrder.length === 0) return;
+
+          if (confirm('確定要清空所有訂單項目嗎？')) {
+            currentOrder = [];
+            updateOrderDisplay();
+            updateOrderPreview();
+          }
+        };
+
+        // 監聽訂購資訊輸入變化
+        [customerName, customerPhone, deliveryAddress, deliveryTime, deliveryTimeUnit].forEach(input => {
+          input.addEventListener('input', function () {
+            // 清除高亮效果
+            this.style.borderColor = 'var(--kt-border)';
+            updateOrderPreview();
+          });
+        });
+
+        // 時間驗證函數
+        function validateDeliveryTime() {
+          const timeValue = deliveryTime.value;
+          if (timeValue) {
+            const [hours, minutes] = timeValue.split(':').map(Number);
+            const timeInMinutes = hours * 60 + minutes;
+            const minTime = 10 * 60; // 10:00
+            const maxTime = 17 * 60; // 17:00
+
+            if (timeInMinutes < minTime || timeInMinutes > maxTime) {
+              deliveryTime.style.borderColor = '#ff6b6b';
+              showCuteAlert(
+                '時間超出範圍！',
+                '送達時間只能在 10:00 - 17:00 之間哦～',
+                '⏰'
+              );
+              deliveryTime.value = '';
+              return false;
+            }
+          }
+          return true;
+        }
+
+        // 監聽時間選擇器變化
+        deliveryTime.addEventListener('change', function () {
+          if (this.value && !validateDeliveryTime()) {
+            return;
+          }
+          this.style.borderColor = 'var(--kt-border)';
+          updateOrderPreview();
+        });
+
+        // 監聽時間選擇器失去焦點
+        deliveryTime.addEventListener('blur', function () {
+          if (this.value && !validateDeliveryTime()) {
+            return;
+          }
+          this.style.borderColor = 'var(--kt-border)';
+        });
+
+        // 限制數量輸入框只能輸入數字
+        quantityInput.addEventListener('input', function (e) {
+          // 移除所有非數字字符
+          this.value = this.value.replace(/[^0-9]/g, '');
+          // 確保最小值為1
+          if (this.value < 1) {
+            this.value = 1;
+          }
+        });
+
+        // 防止粘貼非數字內容
+        quantityInput.addEventListener('paste', function (e) {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text');
+          const numbers = paste.replace(/[^0-9]/g, '');
+          if (numbers) {
+            this.value = Math.max(1, parseInt(numbers) || 1);
+          }
+        });
+
+        // 數量 ± 按鈕（手機版好按）
+        document.getElementById('quantity-minus').addEventListener('click', function () {
+          const n = Math.max(1, (parseInt(quantityInput.value) || 1) - 1);
+          quantityInput.value = n;
+        });
+        document.getElementById('quantity-plus').addEventListener('click', function () {
+          const n = (parseInt(quantityInput.value) || 1) + 1;
+          quantityInput.value = n;
+        });
+
+        // 設置選項按鈕點擊事件
+        document.addEventListener('DOMContentLoaded', () => {
+          // 甜度選項
+          document.querySelectorAll('#sugar-options .option-btn').forEach(btn => {
+            btn.onclick = () => selectOption(btn, 'sugar');
+          });
+
+          // 冰塊選項
+          document.querySelectorAll('#ice-options .option-btn').forEach(btn => {
+            btn.onclick = () => selectOption(btn, 'ice');
+          });
+        });
+
+        // 外送金額查詢功能
+        const deliveryFeeData = [
+          { distance: "2公里以內", fee: 30, freeShipping: 240, minOrder: 120 },
+          { distance: "3公里以內", fee: 45, freeShipping: 360, minOrder: 180 },
+          { distance: "4公里以內", fee: 60, freeShipping: 480, minOrder: 240 },
+          { distance: "5公里以內", fee: 75, freeShipping: 600, minOrder: 300 },
+          { distance: "6公里以內", fee: 90, freeShipping: 720, minOrder: 360 },
+          { distance: "7公里以內", fee: 105, freeShipping: 840, minOrder: 420 },
+          { distance: "8公里以內", fee: 120, freeShipping: 960, minOrder: 480 },
+          { distance: "9公里以內", fee: 135, freeShipping: 1080, minOrder: 540 },
+          { distance: "10公里以內", fee: 150, freeShipping: 1200, minOrder: 600 },
+          { distance: "11公里以內", fee: 165, freeShipping: 1320, minOrder: 660 },
+          { distance: "12公里以內", fee: 180, freeShipping: 1440, minOrder: 720 },
+          { distance: "13公里以內", fee: 195, freeShipping: 1560, minOrder: 780 },
+          { distance: "14公里以內", fee: 210, freeShipping: 1680, minOrder: 840 },
+          { distance: "15公里以內", fee: 225, freeShipping: 1800, minOrder: 900 },
+          { distance: "16公里以內", fee: 240, freeShipping: 1920, minOrder: 960 },
+          { distance: "17公里以內", fee: 255, freeShipping: 2040, minOrder: 1020 },
+          { distance: "18公里以內", fee: 270, freeShipping: 2160, minOrder: 1080 },
+          { distance: "19公里以內", fee: 285, freeShipping: 2280, minOrder: 1140 },
+          { distance: "20公里以內", fee: 300, freeShipping: 2400, minOrder: 1200 }
+        ];
+
+        // 可由外部注入 window.KUNGFU_TEA_SERPAPI_KEY 覆蓋預設值
+        const SERPAPI_KEY = (window.KUNGFU_TEA_SERPAPI_KEY || 'ceb2e0ccd89ad2ac2a04b01fe2a2185d8a0b268e5bd37256f5f6b8427c532a58').trim();
+
+        // 生成外送金額表格
+        function generateDeliveryFeeTable() {
+          const tbody = document.getElementById('delivery-fee-tbody');
+          tbody.innerHTML = '';
+
+          // 檢查是否為手機版
+          const isMobile = window.innerWidth <= 768;
+
+          if (isMobile) {
+            // 手機版：使用卡片式顯示
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="4" style="padding: 0; border: none;">
+                  <div style="display: grid; gap: 8px; padding: 10px;">
+                    ${deliveryFeeData.map((item, index) => `
+                      <div style="background: ${index % 2 === 0 ? '#ffffff' : '#f8f9ff'}; border: 1px solid #ddd; border-radius: 6px; padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.7rem;">
+                        <div style="font-weight: bold; color: var(--kt-text); white-space: nowrap;">${item.distance}</div>
+                        <div style="text-align: right; color: #e74c3c; font-weight: bold; white-space: nowrap;">$${item.fee}</div>
+                        <div style="color: #27ae60; font-weight: bold; white-space: nowrap;">免運: $${item.freeShipping}</div>
+                        <div style="text-align: right; color: var(--kt-primary); font-weight: bold; white-space: nowrap;">最低: $${item.minOrder}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </td>
+              </tr>
+            `;
+          } else {
+            // 桌面版：使用表格顯示
+            deliveryFeeData.forEach((item, index) => {
+              const row = document.createElement('tr');
+              row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8f9ff';
+              row.innerHTML = `
+                <td style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 0.65rem;">${item.distance}</td>
+                <td style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; color: #e74c3c; font-weight: bold; font-size: 0.65rem;">$${item.fee}</td>
+                <td style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; color: #27ae60; font-weight: bold; font-size: 0.65rem;">$${item.freeShipping}</td>
+                <td style="padding: 4px 3px; border: 1px solid #ddd; text-align: center; color: var(--kt-primary); font-weight: bold; font-size: 0.65rem;">$${item.minOrder}</td>
+              `;
+              tbody.appendChild(row);
+            });
+          }
+        }
+
+        // 切換外送金額查詢顯示
+        function toggleDeliveryFee() {
+          const content = document.getElementById('delivery-fee-content');
+          const button = document.getElementById('toggle-delivery-fee');
+
+          if (!content || !button) {
+            return;
+          }
+
+          if (content.style.display === 'none') {
+            content.style.display = 'block';
+            button.textContent = '📋 隱藏查詢表';
+            generateDeliveryFeeTable();
+          } else {
+            content.style.display = 'none';
+            button.textContent = '📋 顯示查詢表';
+          }
+        }
+
+        // 綁定切換按鈕事件
+        document.addEventListener('DOMContentLoaded', () => {
+          const toggleBtn = document.getElementById('toggle-delivery-fee');
+          if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleDeliveryFee);
+          }
+
+          // 監聽視窗大小改變，重新生成表格
+          window.addEventListener('resize', () => {
+            const content = document.getElementById('delivery-fee-content');
+            if (content && content.style.display !== 'none') {
+              generateDeliveryFeeTable();
+            }
+          });
+
+          // 綁定模態框按鈕事件
+          if (addToOrderBtn) {
+            addToOrderBtn.addEventListener('click', addToOrder);
+          }
+          if (cancelOrderBtn) {
+            cancelOrderBtn.addEventListener('click', closeOrderModal);
+          }
+
+          // 點擊模態框背景關閉
+          if (modal) {
+            modal.addEventListener('click', (e) => {
+              if (e.target === modal) {
+                closeOrderModal();
+              }
+            });
+          }
+        });
+
+        // 距離計算功能
+        const storeAddress = "四維路90號, 楊梅區, 桃園市, 台灣";
+        let distanceCalculationTimeout;
+        let googleMapsLoaded = false;
+
+        // 使用 SerpApi Google Maps Directions API 計算距離
+        async function calculateDistanceWithGoogleMaps(customerAddress) {
+          console.log('開始 SerpApi 距離計算:', customerAddress);
+
+          try {
+            if (!SERPAPI_KEY) {
+              console.warn('請先設定 SerpApi API Key，使用備用計算方法');
+              return useBackupDistanceCalculation(customerAddress);
+            }
+
+            console.log('正在使用 SerpApi 計算距離...');
+
+            // 構建 SerpApi 請求參數
+            const params = new URLSearchParams({
+              engine: 'google_maps_directions',
+              start_addr: storeAddress,
+              end_addr: customerAddress,
+              api_key: SERPAPI_KEY,
+              hl: 'zh-tw',  // 繁體中文
+              gl: 'tw'      // 台灣地區
+            });
+
+            const response = await fetch(`https://serpapi.com/search.json?${params}`);
+
+            if (!response.ok) {
+              throw new Error(`SerpApi 請求失敗: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('SerpApi 響應:', data);
+
+            // 檢查是否有路徑信息
+            if (data.directions && data.directions.length > 0) {
+              const direction = data.directions[0];
+
+              // 獲取距離信息
+              let distanceKm = null;
+              if (typeof direction.distance === 'number') {
+                // SerpApi 通常回傳公尺
+                distanceKm = direction.distance / 1000;
+              } else if (typeof direction.formatted_distance === 'string') {
+                const distanceMatch = direction.formatted_distance.match(/(\d+\.?\d*)/);
+                if (distanceMatch) {
+                  distanceKm = parseFloat(distanceMatch[1]);
+                }
+              } else if (typeof direction.distance === 'string') {
+                const distanceMatch = direction.distance.match(/(\d+\.?\d*)/);
+                if (distanceMatch) {
+                  distanceKm = parseFloat(distanceMatch[1]);
+                }
+              }
+
+              // 獲取時間信息
+              let durationText = '';
+              if (typeof direction.formatted_duration === 'string') {
+                durationText = direction.formatted_duration;
+              } else if (typeof direction.duration === 'number') {
+                durationText = `${Math.round(direction.duration / 60)} 分`;
+              }
+
+              if (distanceKm) {
+                console.log('SerpApi 計算距離:', distanceKm, '公里');
+                console.log('SerpApi 計算時間:', durationText);
+
+                // 顯示結果（包含時間信息）
+                displayDistanceResultWithDuration(distanceKm, durationText, true);
+                return;
+              }
+            }
+
+            // 如果沒有路徑信息，嘗試使用 Google Maps 搜索
+            console.log('嘗試使用 Google Maps 搜索...');
+            await searchWithGoogleMaps(customerAddress);
+
+          } catch (error) {
+            console.warn('SerpApi 距離計算失敗:', error);
+            // 如果 SerpApi 計算失敗，使用備用方法
+            useBackupDistanceCalculation(customerAddress);
+          }
+        }
+
+        // 使用 SerpApi Google Maps 搜索功能
+        async function searchWithGoogleMaps(customerAddress) {
+          try {
+            if (!SERPAPI_KEY) {
+              throw new Error('API Key 未設定');
+            }
+
+            // 使用 Google Maps 搜索
+            const params = new URLSearchParams({
+              engine: 'google_maps',
+              q: customerAddress,
+              ll: '@24.913547308670775,121.18078338776571,14z', // 店家精確座標
+              api_key: SERPAPI_KEY,
+              hl: 'zh-tw',
+              gl: 'tw'
+            });
+
+            const response = await fetch(`https://serpapi.com/search.json?${params}`);
+            const data = await response.json();
+
+            if (data.local_results && data.local_results.length > 0) {
+              const result = data.local_results[0];
+              console.log('Google Maps 搜索結果:', result);
+
+              // 這裡可以進一步處理搜索結果
+              // 例如獲取座標並計算距離
+            }
+
+          } catch (error) {
+            console.warn('Google Maps 搜索失敗:', error);
+            throw error;
+          }
+        }
+
+        // 顯示包含時間信息的距離計算結果
+        function displayDistanceResultWithDuration(distanceKm, durationText, isGoogleMaps = false) {
+          const distanceResult = document.getElementById('distance-result');
+          const deliveryLevel = getDeliveryLevel(distanceKm);
+
+          const sourceText = isGoogleMaps ? 'Google Maps 精確計算' : '系統估算';
+
+          // 格式化距離顯示（保留小數點後1位）
+          const formattedDistance = distanceKm.toFixed(1);
+
+          // 計算運費
+          const deliveryFee = getDeliveryFee(distanceKm);
+
+          // 計算預計送達時間（基於距離）
+          const estimatedDeliveryTime = calculateEstimatedDeliveryTime(distanceKm);
+
+          distanceResult.innerHTML = `
+            <div class="distance-display">
+              <span class="distance-icon">📍</span>
+              <span class="distance-text">距離店家: <span class="distance-value">${formattedDistance}</span>公里 (${sourceText})</span>
+            </div>
+            
+            <!-- 詳細距離信息 -->
+            <div class="detailed-distance-info" style="margin: 8px 0; padding: 8px; background: rgba(0, 123, 255, 0.05); border-radius: 6px; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>📏 精確距離:</span>
+                <span style="font-weight: bold; color: #007bff;">${formattedDistance} 公里</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>🚚 運費:</span>
+                <span style="font-weight: bold; color: #e74c3c;">$${deliveryFee}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>⏱️ 預計送達:</span>
+                <span style="font-weight: bold; color: #28a745;">${estimatedDeliveryTime}</span>
+              </div>
+              ${durationText ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span>🛣️ 行車時間:</span>
+                <span style="font-weight: bold; color: #6c757d;">${durationText}</span>
+              </div>
+              ` : ''}
+            </div>
+            
+            <div class="delivery-level">
+              <span class="level-icon">🚚</span>
+              <span class="level-text">外送級別: <span class="level-value ${deliveryLevel.levelClass}">${deliveryLevel.distance}</span></span>
+            </div>
+            <div class="free-shipping-info">
+              <span class="free-icon">💰</span>
+              <span class="free-text">免運條件: <span class="free-shipping-value">滿$${deliveryLevel.freeShipping}免運</span></span>
+            </div>
+            
+            <!-- 免運提醒區域 -->
+            <div id="shipping-reminder" 
+                 class="shipping-reminder" 
+                 style="display: none; margin-top: 12px; padding: 12px; background: rgba(45, 90, 39, 0.06); border-radius: 14px; border-left: 4px solid var(--kt-primary);">
+              <div id="shipping-reminder-content">
+                <!-- 動態內容將在這裡顯示 -->
+              </div>
+            </div>
+            
+            ${!isGoogleMaps ? `
+            <div style="margin-top: 8px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; font-size: 0.8rem; color: #856404;">
+              ⚠️ 此為估算距離，實際距離請以店家確認為準
+            </div>
+            ` : `
+            <div style="margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; font-size: 0.8rem; color: #2e7d32;">
+              ✅ 此為 Google Maps 精確計算距離
+            </div>
+            `}
+          `;
+          distanceResult.style.display = 'block';
+
+          // 更新免運提醒
+          updateShippingReminder(deliveryLevel);
+        }
+
+        // Haversine 公式計算兩點間距離
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+          const R = 6371; // 地球半徑（公里）
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        }
+
+        // 計算運費
+        function getDeliveryFee(distanceKm) {
+          return getDeliveryLevel(distanceKm).fee;
+        }
+
+        // 計算預計送達時間
+        function calculateEstimatedDeliveryTime(distanceKm) {
+          // 基礎準備時間 15 分鐘 + 每公里 2 分鐘
+          const baseTime = 15;
+          const travelTime = Math.ceil(distanceKm * 2);
+          const totalMinutes = baseTime + travelTime;
+
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+
+          if (hours > 0) {
+            return `${hours}小時${minutes}分鐘`;
+          } else {
+            return `${minutes}分鐘`;
+          }
+        }
+
+        // 顯示距離計算結果
+        function displayDistanceResult(distanceKm, isGoogleMaps = false) {
+          const distanceResult = document.getElementById('distance-result');
+          const deliveryLevel = getDeliveryLevel(distanceKm);
+
+          const sourceText = isGoogleMaps ? 'Google Maps 精確計算' : '系統估算';
+
+          // 格式化距離顯示（保留小數點後1位）
+          const formattedDistance = distanceKm.toFixed(1);
+
+          // 計算運費
+          const deliveryFee = getDeliveryFee(distanceKm);
+
+          // 計算預計送達時間（基於距離）
+          const estimatedDeliveryTime = calculateEstimatedDeliveryTime(distanceKm);
+
+          distanceResult.innerHTML = `
+            <div class="distance-display">
+              <span class="distance-icon">📍</span>
+              <span class="distance-text">距離店家: <span class="distance-value">${formattedDistance}</span>公里 (${sourceText})</span>
+            </div>
+            
+            <!-- 詳細距離信息 -->
+            <div class="detailed-distance-info" style="margin: 8px 0; padding: 8px; background: rgba(0, 123, 255, 0.05); border-radius: 6px; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>📏 精確距離:</span>
+                <span style="font-weight: bold; color: #007bff;">${formattedDistance} 公里</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>🚚 運費:</span>
+                <span style="font-weight: bold; color: #e74c3c;">$${deliveryFee}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>⏱️ 預計送達:</span>
+                <span style="font-weight: bold; color: #28a745;">${estimatedDeliveryTime}</span>
+              </div>
+            </div>
+            
+            <div class="delivery-level">
+              <span class="level-icon">🚚</span>
+              <span class="level-text">外送級別: <span class="level-value ${deliveryLevel.levelClass}">${deliveryLevel.distance}</span></span>
+            </div>
+            <div class="free-shipping-info">
+              <span class="free-icon">💰</span>
+              <span class="free-text">免運條件: <span class="free-shipping-value">滿$${deliveryLevel.freeShipping}免運</span></span>
+            </div>
+            
+            <!-- 免運提醒區域 -->
+            <div id="shipping-reminder" 
+                 class="shipping-reminder" 
+                 style="display: none; margin-top: 12px; padding: 12px; background: rgba(45, 90, 39, 0.06); border-radius: 14px; border-left: 4px solid var(--kt-primary);">
+              <div id="shipping-reminder-content">
+                <!-- 動態內容將在這裡顯示 -->
+              </div>
+            </div>
+            
+            ${!isGoogleMaps ? `
+            <div style="margin-top: 8px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; font-size: 0.8rem; color: #856404;">
+              ⚠️ 此為估算距離，實際距離請以店家確認為準
+            </div>
+            ` : `
+            <div style="margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; font-size: 0.8rem; color: #2e7d32;">
+              ✅ 此為 Google Maps 精確計算距離
+            </div>
+            `}
+          `;
+          distanceResult.style.display = 'block';
+
+          // 更新免運提醒
+          updateShippingReminder(deliveryLevel);
+        }
+
+
+        // 初始化距離計算功能
+        function initDistanceCalculation() {
+          const deliveryAddressInput = document.getElementById('delivery-address');
+
+          deliveryAddressInput.addEventListener('input', function () {
+            const address = this.value.trim();
+            clearTimeout(distanceCalculationTimeout);
+            hideDistanceResult();
+
+            if (address.length > 5) {
+              // 延遲500ms後計算，避免頻繁調用
+              distanceCalculationTimeout = setTimeout(() => {
+                // 使用 SerpApi Google Maps Directions API 計算距離
+                calculateDistanceWithGoogleMaps(address);
+              }, 500);
+            }
+          });
+        }
+
+        // 備用距離計算方法（包含特定路段）
+        function useBackupDistanceCalculation(customerAddress) {
+          console.log('使用備用距離計算方法:', customerAddress);
+
+          // 楊梅區特定路段距離設定
+          const yangmeiSpecificRoutes = {
+            '幼三路': 4.7, '幼獅路': 4.7, '幼獅工業區': 4.7,
+            '四維路': 0.5, '大成路': 1.2, '新成路': 1.5,
+            '永美路': 2.8, '中山路': 1.8, '文化街': 1.5,
+            '梅高路': 3.5, '梅獅路': 2.9, '富岡': 5.2, '楊梅火車站': 2.8,
+            '瑞坪路': 3.8, '高榮路': 3.2, '新榮路': 2.8,
+            '金龍路': 4.8, '秀才路': 6.6, '上湖路': 6.2,
+            '水美路': 4.8, '三湖路': 5.8, '頭湖路': 6.5,
+            '楊湖路': 4.2, '瑞原路': 4.5, '永揚路': 3.8,
+            '新富路': 5.2, '富豐路': 5.8, '瑞溪路': 4.8
+          };
+
+          // 平鎮區特定路段距離設定
+          const pingzhenSpecificRoutes = {
+            '工業一路': 4.5, '工業二路': 4.5, '工業三路': 4.5, '工業四路': 4.5,
+            '工業五路': 4.5, '工業六路': 4.5, '工業七路': 4.5, '工業八路': 4.5,
+            '工業九路': 4.5, '工業十路': 4.5, '工業十一路': 4.5,
+            '中豐路': 5.5, '環南路': 6.8, '振興路': 4.8,
+            '復興街': 5.2, '民族路': 4.2, '中正路': 5.8,
+            '延平路': 4.5, '金陵路': 5.5, '廣泰路': 6.8
+          };
+
+          // 其他區域距離估算
+          const areaEstimates = {
+            '楊梅': 3, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
+            '新莊': 15, '板橋': 18, '三重': 16, '蘆竹': 10, '大園': 8, '觀音': 15,
+            '龍潭': 12, '平鎮': 7, '八德': 10, '龜山': 14
+          };
+
+          let estimatedDistance = 10;
+          let matchedRoute = '';
+
+          // 先檢查楊梅區特定路段
+          for (const [route, distance] of Object.entries(yangmeiSpecificRoutes)) {
+            if (customerAddress.includes(route)) {
+              estimatedDistance = distance;
+              matchedRoute = `楊梅區-${route}`;
+              console.log(`匹配到楊梅區路段: ${route} = ${distance}公里`);
+              break;
+            }
+          }
+
+          // 再檢查平鎮區特定路段
+          if (estimatedDistance === 10) {
+            for (const [route, distance] of Object.entries(pingzhenSpecificRoutes)) {
+              if (customerAddress.includes(route)) {
+                estimatedDistance = distance;
+                matchedRoute = `平鎮區-${route}`;
+                console.log(`匹配到平鎮區路段: ${route} = ${distance}公里`);
+                break;
+              }
+            }
+          }
+
+          // 如果沒有找到特定路段，再檢查其他區域
+          if (estimatedDistance === 10) {
+            for (const [area, distance] of Object.entries(areaEstimates)) {
+              if (customerAddress.includes(area)) {
+                estimatedDistance = distance;
+                matchedRoute = `其他區域-${area}`;
+                console.log(`匹配到其他區域: ${area} = ${distance}公里`);
+                break;
+              }
+            }
+          }
+
+          console.log(`備用計算距離: ${estimatedDistance}公里 (匹配路段: ${matchedRoute || '無匹配'})`);
+
+          // 使用統一的顯示函數
+          displayDistanceResult(estimatedDistance, false);
+        }
+
+        // 隱藏距離結果
+        function hideDistanceResult() {
+          const distanceResult = document.getElementById('distance-result');
+          distanceResult.style.display = 'none';
+        }
+
+        // 更新免運提醒
+        function updateShippingReminder(deliveryLevel) {
+          const shippingReminder = document.getElementById('shipping-reminder');
+          const shippingReminderContent = document.getElementById('shipping-reminder-content');
+
+          if (!shippingReminder || !shippingReminderContent) return;
+
+          // 計算當前訂單總金額
+          const currentTotal = currentOrder.reduce((sum, item) => sum + item.price, 0);
+          const freeShippingAmount = deliveryLevel.freeShipping;
+          const deliveryFee = deliveryLevel.fee;
+
+          let reminderHTML = '';
+
+          if (currentTotal >= freeShippingAmount) {
+            // 已達成免運條件
+            reminderHTML = `
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">🎉</span>
+                <span class="shipping-reminder-text">恭喜！已達成免運條件</span>
+                <span class="shipping-reminder-amount achieved">✓ 免運</span>
+              </div>
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">💰</span>
+                <span class="shipping-reminder-text">目前訂單金額：</span>
+                <span class="shipping-reminder-amount achieved">$${currentTotal}</span>
+              </div>
+            `;
+          } else {
+            // 未達成免運條件
+            const remainingAmount = freeShippingAmount - currentTotal;
+            reminderHTML = `
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">📊</span>
+                <span class="shipping-reminder-text">目前訂單金額：</span>
+                <span class="shipping-reminder-amount">$${currentTotal}</span>
+              </div>
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">🎯</span>
+                <span class="shipping-reminder-text">還差 <span class="shipping-reminder-amount">$${remainingAmount}</span> 達成免運</span>
+              </div>
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">🚚</span>
+                <span class="shipping-reminder-text">未滿額需加運費：</span>
+                <span class="shipping-reminder-fee">$${deliveryFee}</span>
+              </div>
+              <div class="shipping-reminder-item">
+                <span class="shipping-reminder-icon">💳</span>
+                <span class="shipping-reminder-text">含運費總計：</span>
+                <span class="shipping-reminder-amount">$${currentTotal + deliveryFee}</span>
+              </div>
+            `;
+          }
+
+          shippingReminderContent.innerHTML = reminderHTML;
+          shippingReminder.style.display = 'block';
+        }
+
+        // 獲取當前外送級別
+        function getCurrentDeliveryLevel() {
+          const deliveryAddress = document.getElementById('delivery-address');
+          if (!deliveryAddress || deliveryAddress.value.trim().length <= 5) {
+            return null;
+          }
+
+          const address = deliveryAddress.value.trim();
+
+          // 楊梅區特定路段距離設定
+          const yangmeiSpecificRoutes = {
+            '幼三路': 4.7, '幼獅路': 4.7, '幼獅工業區': 4.7,
+            '四維路': 0.5, '大成路': 1.2, '新成路': 1.5,
+            '永美路': 2.8, '中山路': 1.8, '文化街': 1.5,
+            '梅高路': 3.5, '梅獅路': 2.9, '富岡': 5.2, '楊梅火車站': 2.8,
+            '瑞坪路': 3.8, '高榮路': 3.2, '新榮路': 2.8,
+            '金龍路': 4.8, '秀才路': 6.6, '上湖路': 6.2,
+            '水美路': 4.8, '三湖路': 5.8, '頭湖路': 6.5,
+            '楊湖路': 4.2, '瑞原路': 4.5, '永揚路': 3.8,
+            '新富路': 5.2, '富豐路': 5.8, '瑞溪路': 4.8
+          };
+
+          // 平鎮區特定路段距離設定
+          const pingzhenSpecificRoutes = {
+            '工業一路': 4.5, '工業二路': 4.5, '工業三路': 4.5, '工業四路': 4.5,
+            '工業五路': 4.5, '工業六路': 4.5, '工業七路': 4.5, '工業八路': 4.5,
+            '工業九路': 4.5, '工業十路': 4.5, '工業十一路': 4.5,
+            '中豐路': 5.5, '環南路': 6.8, '振興路': 4.8,
+            '復興街': 5.2, '民族路': 4.2, '中正路': 5.8,
+            '延平路': 4.5, '金陵路': 5.5, '廣泰路': 6.8
+          };
+
+          // 其他區域距離估算
+          const areaEstimates = {
+            '楊梅': 3, '中壢': 8, '桃園': 12, '新竹': 18, '台北': 25, '新北': 20,
+            '新莊': 15, '板橋': 18, '三重': 16, '蘆竹': 10, '大園': 8, '觀音': 15,
+            '龍潭': 12, '平鎮': 7, '八德': 10, '龜山': 14
+          };
+
+          let estimatedDistance = 10;
+
+          // 先檢查楊梅區特定路段
+          for (const [route, distance] of Object.entries(yangmeiSpecificRoutes)) {
+            if (address.includes(route)) {
+              estimatedDistance = distance;
+              break;
+            }
+          }
+
+          // 再檢查平鎮區特定路段
+          if (estimatedDistance === 10) {
+            for (const [route, distance] of Object.entries(pingzhenSpecificRoutes)) {
+              if (address.includes(route)) {
+                estimatedDistance = distance;
+                break;
+              }
+            }
+          }
+
+          // 如果沒有找到特定路段，再檢查其他區域
+          if (estimatedDistance === 10) {
+            for (const [area, distance] of Object.entries(areaEstimates)) {
+              if (address.includes(area)) {
+                estimatedDistance = distance;
+                break;
+              }
+            }
+          }
+
+          return getDeliveryLevel(estimatedDistance);
+        }
+
+        // 根據距離獲取外送級別
+        function getDeliveryLevel(distanceKm) {
+          for (let i = 0; i < deliveryFeeData.length; i++) {
+            const level = deliveryFeeData[i];
+            const maxDistance = parseInt(level.distance.match(/\d+/)[0]);
+
+            if (distanceKm <= maxDistance) {
+              let levelClass = 'level-low';
+              if (maxDistance >= 15) levelClass = 'level-max';
+              else if (maxDistance >= 10) levelClass = 'level-high';
+              else if (maxDistance >= 5) levelClass = 'level-medium';
+
+              return {
+                distance: level.distance,
+                fee: level.fee,
+                freeShipping: level.freeShipping,
+                minOrder: level.minOrder,
+                levelClass: levelClass
+              };
+            }
+          }
+
+          return {
+            distance: "超過20公里",
+            fee: 300,
+            freeShipping: 2400,
+            minOrder: 1200,
+            levelClass: 'level-max'
+          };
+        }
+
+        // 菜單查看功能
+        function initMenuViewer() {
+          const menuModal = document.getElementById('menu-modal');
+          const viewMenuBtn = document.getElementById('view-menu-btn');
+          const closeMenuBtn = document.getElementById('close-menu-modal');
+
+          if (viewMenuBtn && menuModal) {
+            // 開啟菜單模態框
+            viewMenuBtn.addEventListener('click', () => {
+              menuModal.style.display = 'block';
+            });
+          }
+
+          if (closeMenuBtn && menuModal) {
+            // 關閉菜單模態框
+            closeMenuBtn.addEventListener('click', () => {
+              menuModal.style.display = 'none';
+            });
+          }
+
+          if (menuModal) {
+            // 點擊模態框外部關閉
+            menuModal.addEventListener('click', (e) => {
+              if (e.target === menuModal) {
+                menuModal.style.display = 'none';
+              }
+            });
+          }
+        }
+
+        // 初始化應用
+        initMenu();
+        updateOrderDisplay();
+        updateOrderPreview();
+        updateLoadOrdersButton();
+        initMenuViewer();
+
+        // 初始化距離計算功能
+        initDistanceCalculation();
+      </script>
+    </div>
+  </body>
+
+</html>

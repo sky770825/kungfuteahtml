@@ -1,0 +1,30 @@
+{
+  "name": "kungfu-tea-ordering-system",
+  "version": "2.1.0",
+  "description": "功夫茶線上點餐系統 - 楊梅四維店專用",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 3000 -o",
+    "dev": "npx live-server --port=3000 --open=/index.html",
+    "build": "echo 'Building for production...'",
+    "deploy": "echo 'Deploying to production...'"
+  },
+  "keywords": [
+    "kungfu-tea",
+    "ordering-system",
+    "food-ordering",
+    "restaurant",
+    "taiwan"
+  ],
+  "author": "功夫茶楊梅四維店",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/kungfu-tea-ordering.git"
+  },
+  "homepage": "https://your-domain.com"
+}

@@ -1,0 +1,3081 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功夫茶庫存表 - 超簡易版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-toggle::after {
+            content: '▼';
+            font-size: 0.7em;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            min-width: 180px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            animation: fadeIn 0.2s;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: white;
+            color: #333;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-item:hover {
+            background: #f0f0f0;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 5px 0;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #38ef7d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffa500;
+            color: white;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            position: relative;
+            overflow: hidden;
+            animation: pulse 2s infinite;
+        }
+
+        .btn-save::before {
+            content: '⭐';
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: sparkle 3s infinite;
+            font-size: 1.2em;
+        }
+
+        .btn-save::after {
+            content: '⭐';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: sparkle 3s infinite 1.5s;
+            font-size: 1.2em;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            }
+            50% {
+                box-shadow: 0 4px 25px rgba(255, 107, 107, 0.8);
+            }
+        }
+
+        @keyframes sparkle {
+            0%, 100% {
+                opacity: 0;
+                transform: translateY(-50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1.2);
+            }
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            min-width: 800px;
+        }
+
+        thead {
+            background: #667eea;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* 表格列寬優化 */
+        th:nth-child(1), td:nth-child(1) { width: 10%; } /* 類別 */
+        th:nth-child(2), td:nth-child(2) { width: 20%; } /* 商品名稱 */
+        th:nth-child(3), td:nth-child(3) { width: 12%; } /* 單位 */
+        th:nth-child(4), td:nth-child(4) { width: 10%; } /* 常態庫存 */
+        th:nth-child(5), td:nth-child(5) { width: 10%; } /* 現有庫存 */
+        th:nth-child(6), td:nth-child(6) { width: 10%; } /* 短缺數量 */
+        th:nth-child(7), td:nth-child(7) { width: 20%; } /* 快速操作 */
+        th:nth-child(8), td:nth-child(8) { width: 8%; }  /* 狀態 */
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stock-input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .stock-low {
+            color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .qty-btn {
+            padding: 5px 12px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .qty-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-minus {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-plus {
+            background: #38ef7d;
+            color: white;
+        }
+
+        .btn-restock {
+            background: #38ef7d;
+            color: white;
+            padding: 6px 12px;
+            margin-left: 5px;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff9800;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+        }
+
+        .info-box-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.3s;
+            background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+        }
+
+        .info-box-header:hover {
+            background: linear-gradient(135deg, #ffd699 0%, #ffb84d 100%);
+        }
+
+        .info-box h3 {
+            color: #e65100;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .toggle-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+
+        .info-box.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .info-box-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .info-box:not(.collapsed) .info-box-content {
+            max-height: 500px;
+            padding: 0 20px 20px 20px;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .info-box p {
+            color: #333;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        
+        .info-box p strong {
+            color: #d84315;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card:nth-child(1) {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            color: white;
+        }
+
+        .stat-card:nth-child(4) {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            opacity: 0.95;
+            margin-bottom: 3px;
+            white-space: nowrap;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* 多欄卡片布局 */
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .view-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .category-section {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-size: clamp(1.1em, 2.5vw, 1.4em);
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .category-count {
+            font-size: clamp(0.65em, 1.5vw, 0.75em);
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .item-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .item-card.low-stock {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .item-card.out-of-stock {
+            border-color: #dc3545;
+            background: #ffe5e5;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            gap: 3px;
+        }
+
+        .item-name {
+            font-size: clamp(0.75em, 1.8vw, 0.95em);
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .item-unit {
+            font-size: clamp(0.6em, 1.2vw, 0.7em);
+            color: #666;
+            background: #f0f0f0;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .status-badge {
+            font-size: clamp(0.9em, 2vw, 1.1em);
+            margin-left: 3px;
+            flex-shrink: 0;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stock-row, .shortage-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: space-between;
+        }
+
+        .stock-label {
+            font-size: clamp(0.65em, 1.4vw, 0.75em);
+            color: #666;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .stock-input-card {
+            width: clamp(40px, 6vw, 55px);
+            padding: 3px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: clamp(0.8em, 1.6vw, 0.9em);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 3px;
+            margin-top: 4px;
+        }
+
+        .card-actions .qty-btn {
+            flex: 1;
+            padding: 4px 2px;
+            font-size: clamp(0.7em, 1.4vw, 0.8em);
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .table-view {
+            display: block;
+        }
+
+        .card-view, .order-view, .quick-view {
+            display: none;
+        }
+
+        .view-card .table-view {
+            display: none;
+        }
+
+        .view-card .card-view {
+            display: block;
+        }
+
+        .view-quick .table-view,
+        .view-quick .card-view {
+            display: none;
+        }
+
+        .view-quick .quick-view {
+            display: block;
+        }
+
+        .view-order .table-view,
+        .view-order .card-view {
+            display: none;
+        }
+
+        .view-order .order-view {
+            display: block;
+        }
+
+        .order-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+        }
+
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .order-table th {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .order-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .order-table tr:hover {
+            background: #fff5f5;
+        }
+
+        .order-summary {
+            background: #fff5f5;
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .order-summary h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+
+        .order-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .order-stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .order-stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .need-order-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        /* 快速使用視圖 */
+        .quick-search {
+            margin-bottom: 15px;
+        }
+
+        .quick-search input {
+            width: 100%;
+            padding: clamp(10px, 2vw, 15px);
+            font-size: clamp(1em, 2vw, 1.2em);
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .quick-search input:focus {
+            outline: none;
+            border-color: #38ef7d;
+            box-shadow: 0 0 10px rgba(56, 239, 125, 0.3);
+        }
+
+        .usage-log {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .usage-log h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+
+        .usage-item {
+            padding: 8px 12px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #667eea;
+            position: relative;
+        }
+
+        .usage-item.recent {
+            animation: fadeIn 0.5s;
+            background: #e7f3ff;
+        }
+
+        .usage-delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .usage-delete-btn:hover {
+            background: #dc3545;
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .usage-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .quick-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .quick-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+
+        .quick-item:active {
+            transform: scale(0.95);
+        }
+
+        .quick-item.low-stock {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .quick-item.out-of-stock {
+            border-color: #dc3545;
+            background: #ffe5e5;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .quick-item-name {
+            font-size: clamp(0.7em, 1.6vw, 0.85em);
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #333;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .quick-item-stock {
+            font-size: clamp(1.2em, 2.5vw, 1.5em);
+            font-weight: bold;
+            margin: 4px 0;
+        }
+
+        .quick-item-stock.low {
+            color: #ff6b6b;
+        }
+
+        .quick-item-stock.out {
+            color: #dc3545;
+        }
+
+        .quick-item-stock.ok {
+            color: #38ef7d;
+        }
+
+        .quick-item-unit {
+            font-size: clamp(0.6em, 1.2vw, 0.7em);
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .quick-item-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: clamp(0.9em, 2vw, 1.1em);
+        }
+
+        .quick-category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 超大屏幕 - 6栏或更多 */
+        @media (min-width: 1400px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 10px;
+            }
+            
+            .item-card {
+                padding: 8px;
+            }
+        }
+
+        /* 大屏幕 - 5栏 */
+        @media (max-width: 1399px) and (min-width: 1024px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 8px;
+            }
+        }
+
+        /* 中屏幕 - 4栏 */
+        @media (max-width: 1023px) and (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            .item-card {
+                padding: 8px;
+            }
+        }
+
+        /* 小屏幕 - 3栏 */
+        @media (max-width: 767px) and (min-width: 481px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            
+            .item-card {
+                padding: 6px;
+            }
+        }
+
+        /* 超小屏幕 - 2栏 */
+        @media (max-width: 480px) and (min-width: 1px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            
+            .item-card {
+                padding: 8px;
+            }
+            
+            .item-name {
+                font-size: 0.85em;
+                white-space: normal;
+            }
+            
+            .stock-label {
+                font-size: 0.75em;
+            }
+            
+            .stock-input-card {
+                width: 45px;
+                font-size: 0.9em;
+            }
+            
+            .card-actions .qty-btn {
+                font-size: 0.8em;
+                padding: 5px 4px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+
+            .subtitle {
+                font-size: 0.9em;
+                margin-bottom: 15px;
+            }
+
+            .controls {
+                gap: 8px;
+            }
+
+            .btn, .dropdown-toggle {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+
+            .btn-save {
+                font-size: 0.9em;
+                padding: 10px 15px;
+            }
+
+            .view-toggle {
+                gap: 6px;
+                margin-bottom: 15px;
+            }
+
+            .view-btn {
+                padding: 8px 12px;
+                font-size: 0.8em;
+            }
+
+            .stats {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+
+            .stat-card {
+                padding: 8px 6px;
+            }
+
+            .stat-label {
+                font-size: 0.65em;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+
+            .dropdown-menu {
+                min-width: 160px;
+            }
+
+            .dropdown-item {
+                padding: 10px 12px;
+                font-size: 0.85em;
+            }
+
+            /* 手機版表格優化 */
+            table {
+                font-size: 0.7em;
+                min-width: 100%;
+            }
+
+            th {
+                padding: 8px 4px;
+                font-size: 0.9em;
+            }
+
+            td {
+                padding: 6px 4px;
+            }
+
+            .stock-input {
+                width: 45px;
+                padding: 3px;
+                font-size: 0.9em;
+            }
+
+            .qty-btn {
+                padding: 4px 6px;
+                margin: 0 1px;
+                font-size: 0.85em;
+            }
+
+            .btn-restock {
+                padding: 4px 6px;
+                margin-left: 2px;
+                font-size: 0.75em;
+            }
+
+            /* 添加滾動提示 */
+            .table-container::after {
+                content: '👉 左右滑動查看更多';
+                display: block;
+                text-align: center;
+                color: #999;
+                font-size: 0.85em;
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 5px;
+                margin-top: 10px;
+            }
+
+            .modal-dialog {
+                padding: 20px 15px;
+                width: 95%;
+            }
+
+            .modal-title {
+                font-size: 1.3em;
+            }
+
+            .info-box {
+                margin-bottom: 15px;
+            }
+
+            .info-box-header {
+                padding: 12px 15px;
+            }
+
+            .info-box h3 {
+                font-size: 1em;
+            }
+
+            .info-box p {
+                font-size: 0.85em;
+                line-height: 1.6;
+            }
+
+            .info-box:not(.collapsed) .info-box-content {
+                max-height: 400px;
+            }
+
+            /* 叫貨清單手機優化 */
+            .order-summary {
+                padding: 15px;
+            }
+
+            .order-summary h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .order-stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .order-stat-item {
+                padding: 12px;
+            }
+
+            .order-stat-label {
+                font-size: 0.85em;
+            }
+
+            .order-stat-value {
+                font-size: 1.8em;
+            }
+
+            .order-table {
+                font-size: 0.7em;
+                min-width: 100%;
+            }
+
+            .order-table th {
+                padding: 8px 4px;
+                font-size: 0.9em;
+            }
+
+            .order-table td {
+                padding: 6px 4px;
+            }
+
+            .need-order-badge {
+                font-size: 0.8em;
+                padding: 2px 6px;
+            }
+
+            /* 添加滾動提示 */
+            .order-table-container::after {
+                content: '👉 左右滑動查看更多';
+                display: block;
+                text-align: center;
+                color: #999;
+                font-size: 0.85em;
+                padding: 10px;
+                background: #fff5f5;
+                border-radius: 5px;
+                margin-top: 10px;
+            }
+
+            /* 快速類別篩選優化 */
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            /* 使用記錄優化 */
+            .usage-log {
+                padding: 12px;
+                max-height: 180px;
+            }
+
+            .usage-log h4 {
+                font-size: 0.95em;
+            }
+
+            .usage-item {
+                padding: 6px 10px;
+                font-size: 0.9em;
+            }
+
+            .usage-delete-btn {
+                padding: 3px 8px;
+                font-size: 0.8em;
+            }
+
+            .usage-time {
+                font-size: 0.75em;
+            }
+        }
+
+        /* 極小螢幕（手機橫向或窄屏手機）*/
+        @media (max-width: 480px) {
+            table {
+                font-size: 0.65em;
+            }
+
+            th {
+                padding: 6px 3px;
+            }
+
+            td {
+                padding: 5px 3px;
+            }
+
+            .stock-input {
+                width: 40px;
+                padding: 2px;
+                font-size: 0.85em;
+            }
+
+            .qty-btn {
+                padding: 3px 5px;
+                font-size: 0.8em;
+            }
+
+            .btn-restock {
+                padding: 3px 5px;
+                font-size: 0.7em;
+                white-space: nowrap;
+            }
+
+            /* 叫貨清單極小螢幕優化 */
+            .order-summary {
+                padding: 12px;
+            }
+
+            .order-summary h3 {
+                font-size: 1em;
+            }
+
+            .order-stat-item {
+                padding: 10px;
+            }
+
+            .order-stat-label {
+                font-size: 0.75em;
+            }
+
+            .order-stat-value {
+                font-size: 1.5em;
+            }
+
+            .order-table {
+                font-size: 0.65em;
+            }
+
+            .order-table th {
+                padding: 6px 3px;
+            }
+
+            .order-table td {
+                padding: 5px 3px;
+            }
+
+            .need-order-badge {
+                font-size: 0.75em;
+                padding: 2px 4px;
+            }
+
+            /* 快速類別篩選極小螢幕優化 */
+            .filter-btn {
+                padding: 5px 10px;
+                font-size: 0.75em;
+            }
+
+            /* 使用記錄極小螢幕優化 */
+            .usage-log {
+                padding: 10px;
+                max-height: 150px;
+            }
+
+            .usage-log h4 {
+                font-size: 0.85em;
+            }
+
+            .usage-item {
+                padding: 5px 8px;
+                font-size: 0.85em;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .usage-delete-btn {
+                padding: 2px 6px;
+                font-size: 0.75em;
+                align-self: flex-end;
+            }
+
+            .usage-time {
+                font-size: 0.7em;
+            }
+
+            /* 快速搜尋優化 */
+            .quick-search input {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            /* 快速上手指南極小螢幕優化 */
+            .info-box p {
+                font-size: 0.8em;
+                line-height: 1.5;
+            }
+
+            .info-box:not(.collapsed) .info-box-content {
+                max-height: 350px;
+            }
+        }
+
+        /* 模態彈窗樣式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-dialog {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .modal-input.error {
+            border-color: #ff6b6b;
+            animation: shake 0.5s;
+        }
+
+        .modal-input.success {
+            border-color: #38ef7d;
+            background: #f0fff4;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .modal-dialog.success {
+            animation: successPulse 0.3s ease;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .modal-subtitle {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .modal-body {
+            margin: 30px 0;
+        }
+
+        .modal-input-group {
+            margin-bottom: 20px;
+        }
+
+        .modal-label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            text-align: center;
+            letter-spacing: 5px;
+            font-weight: bold;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .modal-btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #ff6b6b;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .password-hint {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .password-hint p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍵 功夫茶庫存表</h1>
+        <p class="subtitle">楊梅四維店 - 超簡易版（資料自動儲存）</p>
+
+        <div class="info-box collapsed" id="infoBox">
+            <div class="info-box-header" onclick="toggleInfoBox()">
+                <h3>💡 快速上手指南</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="info-box-content" style="max-height: 0; padding: 0 20px; opacity: 0; visibility: hidden;">
+                <p><strong style="color: #e65100; font-size: 1.1em;">📊 四種視圖模式：</strong></p>
+                <p>• <strong>表格視圖</strong>：完整資料管理，可直接修改庫存、補貨量，適合盤點</p>
+                <p>• <strong>卡片視圖</strong>：按類別分組顯示，大卡片易操作，適合快速瀏覽</p>
+                <p>• <strong>⚡ 快速使用</strong>：點擊商品直接扣庫存（-1），誤點可刪除記錄回補，最常用！</p>
+                <p>• <strong>叫貨清單</strong>：自動顯示需補貨商品，可匯出訂購單</p>
+                
+                <p style="margin-top: 15px;"><strong style="color: #e65100; font-size: 1.1em;">☁️ 雲端同步：</strong></p>
+                <p>• <strong style="color: #ff6b6b;">紅色閃爍按鈕「儲存到雲端Excel」</strong> - 所有人都可以儲存（無需密碼）</p>
+                <p>• <strong>從雲端Excel讀取</strong> - 需要密碼 <span style="background: #fff; padding: 2px 8px; border-radius: 4px; font-family: monospace;">0825</span>（僅店長/副店長）</p>
+                <p>• 💾 <strong>本地自動儲存</strong>：每次操作都會自動存在瀏覽器中</p>
+                
+                <p style="margin-top: 15px;"><strong style="color: #e65100; font-size: 1.1em;">🎯 重點功能：</strong></p>
+                <p>• 📦 <strong>補貨按鈕</strong>：收到貨點擊「補貨到貨」，自動增加庫存</p>
+                <p>• 🔍 <strong>搜尋過濾</strong>：快速找到想要的商品，支援名稱和類別搜尋</p>
+                <p>• 🎨 <strong>顏色警示</strong>：紅色=缺貨/低庫存，黃色=需注意，綠色=充足</p>
+                <p>• 📥 <strong>匯出CSV</strong>：可在 Excel 或 Google Sheets 中開啟編輯</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">總商品數</div>
+                <div class="stat-value" id="totalItems">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">低庫存警示</div>
+                <div class="stat-value" id="lowStock">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">需要補貨</div>
+                <div class="stat-value" id="needRestock">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">缺貨項目</div>
+                <div class="stat-value" id="outOfStock">0</div>
+            </div>
+        </div>
+
+        <div class="view-toggle">
+            <button class="view-btn" onclick="switchView('table')">📋 表格視圖</button>
+            <button class="view-btn" onclick="switchView('card')">🎴 卡片視圖</button>
+            <button class="view-btn active" onclick="switchView('quick')">⚡ 快速使用</button>
+            <button class="view-btn" onclick="switchView('order')">📝 叫貨清單</button>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-save" onclick="syncToSheets()" id="syncBtn">⭐ 💾 儲存到雲端Excel ⭐</button>
+            
+            <div class="dropdown" id="dataDropdown">
+                <button class="dropdown-toggle" onclick="toggleDropdown('dataDropdown')">
+                    📂 資料管理
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" onclick="window.open('https://docs.google.com/spreadsheets/d/15u3_XJCf7sqhCVKb0WKQU89S_7_s_Oy0Hu9nN53aubo/edit?gid=165804177#gid=165804177', '_blank'); closeDropdown('dataDropdown')">
+                        📊 後台庫存表
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="loadFromSheets(); closeDropdown('dataDropdown')">
+                        ☁️ 從雲端EXCEL讀取
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="exportToCSV(); closeDropdown('dataDropdown')">
+                        📥 匯出CSV
+                    </button>
+                    <button class="dropdown-item" onclick="exportOrderList(); closeDropdown('dataDropdown')">
+                        📋 匯出叫貨單
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="if(confirm('確定要清空所有資料嗎？')) clearAllData(); closeDropdown('dataDropdown')">
+                        🗑️ 清空資料
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-warning" onclick="showSheetsConfig()" style="display: none;" id="configBtn">⚙️ 設定</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <!-- 表格視圖 -->
+        <div class="table-view">
+            <div class="table-container">
+                <table id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>類別</th>
+                            <th>商品名稱</th>
+                            <th>單位</th>
+                            <th>常態庫存</th>
+                            <th>現有庫存</th>
+                            <th>短缺數量</th>
+                            <th>快速操作</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- 資料會動態載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 卡片視圖 -->
+        <div class="card-view" id="cardView">
+            <!-- 卡片會動態載入 -->
+        </div>
+
+        <!-- 快速使用視圖 -->
+        <div class="quick-view" id="quickView">
+            <!-- 快速使用會動態載入 -->
+        </div>
+
+        <!-- 叫貨清單視圖 -->
+        <div class="order-view" id="orderView">
+            <!-- 叫貨清單會動態載入 -->
+        </div>
+    </div>
+
+    <!-- 模態彈窗 - 密碼輸入 -->
+    <div class="modal-overlay" id="passwordModal" onclick="handleModalOverlayClick(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closePasswordModal()">×</button>
+            <div class="modal-header">
+                <div class="modal-icon">🔐</div>
+                <h2 class="modal-title">權限驗證</h2>
+                <p class="modal-subtitle">從雲端Excel讀取資料需要驗證身份</p>
+            </div>
+            <div class="modal-body">
+                <div class="modal-input-group">
+                    <label class="modal-label">請輸入密碼（店長/副店長）</label>
+                    <input type="password" 
+                           id="passwordInput" 
+                           class="modal-input" 
+                           placeholder="••••"
+                           maxlength="4"
+                           onkeypress="handlePasswordKeypress(event)">
+                </div>
+                <div class="password-hint">
+                    <p>💡 <strong>提示：</strong></p>
+                    <p>• 請輸入4位數密碼</p>
+                    <p>• 只有店長和副店長有權讀取雲端資料</p>
+                    <p>• 密碼錯誤將無法載入資料</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closePasswordModal()">
+                    取消
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="verifyPassword()">
+                    ✓ 確認讀取
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 預設資料（來自 Google Sheets）
+        const defaultData = [
+            // 果露類
+            { category: '果露類', name: '黃金芒果膏', unit: '1箱6入', stock: 1, shortage: 2, normalStock: 5 },
+            { category: '果露類', name: '古早味翠梅汁', unit: '1箱6入', stock: 6, shortage: 0, normalStock: 8 },
+            { category: '果露類', name: '頂級百香果醬', unit: '1箱4入', stock: 4, shortage: 0, normalStock: 6 },
+            { category: '果露類', name: '冬瓜露', unit: '1箱10入', stock: 9, shortage: 1, normalStock: 12 },
+            { category: '果露類', name: '沖繩黑糖薑茶', unit: '單罐購', stock: 1, shortage: 0, normalStock: 3 },
+            { category: '果露類', name: '頂級紅柚汁', unit: '1箱4入', stock: 0, shortage: 3, normalStock: 4 },
+            { category: '果露類', name: '玫瑰花釀', unit: '單罐購', stock: 1, shortage: 1, normalStock: 3 },
+            { category: '果露類', name: '桂圓紅棗醬', unit: '單罐購', stock: 1, shortage: 0, normalStock: 2 },
+            { category: '果露類', name: '楊桃蜜', unit: '一箱/6包', stock: 3, shortage: 0, normalStock: 5, note: '※庫存單位：箱' },
+            
+            // 粉類
+            { category: '粉類', name: '奶精粉', unit: '1箱20包', stock: 20, shortage: 3, normalStock: 25 },
+            { category: '粉類', name: '粉粿粉', unit: '1袋5包', stock: 6, shortage: 1, normalStock: 10 },
+            
+            // 糖類
+            { category: '糖類', name: '功夫茶蜂蜜', unit: '1箱5入', stock: 10, shortage: 2, normalStock: 15 },
+            { category: '糖類', name: '米佶甘蔗糖', unit: '單桶購', stock: 1, shortage: 1, normalStock: 3, allowDecimal: true },
+            { category: '糖類', name: '台灣黑糖粉', unit: '單包購', stock: 1, shortage: 1, normalStock: 3, allowDecimal: true },
+            
+            // 茶葉類
+            { category: '茶葉類', name: '四季春茶', unit: '1箱5包', stock: 3, shortage: 2, normalStock: 8 },
+            { category: '茶葉類', name: '紅烏龍', unit: '1箱5包', stock: 2, shortage: 0, normalStock: 5 },
+            { category: '茶葉類', name: '東方美人茶', unit: '1箱5包', stock: 0, shortage: 0, normalStock: 3 },
+            { category: '茶葉類', name: '炭焙烏龍茶', unit: '1箱5包', stock: 5, shortage: 0, normalStock: 8 },
+            { category: '茶葉類', name: '高山茶', unit: '1箱5包', stock: 3, shortage: 1, normalStock: 6 },
+            { category: '茶葉類', name: '小葉紅茶', unit: '1箱5包', stock: 10, shortage: 1, normalStock: 12 },
+            { category: '茶葉類', name: '金萱茶', unit: '1箱5包', stock: 2, shortage: 1, normalStock: 5 },
+            { category: '茶葉類', name: '清香烏龍', unit: '1箱5包', stock: 4, shortage: 0, normalStock: 6 },
+            { category: '茶葉類', name: '鐵觀音', unit: '1箱5包', stock: 1, shortage: 0, normalStock: 4 },
+            { category: '茶葉類', name: '蜜香紅茶', unit: '1箱5包', stock: 2, shortage: 0, normalStock: 5 },
+            { category: '茶葉類', name: '茉莉綠茶', unit: '1箱5包', stock: 6, shortage: 1, normalStock: 8 },
+            { category: '茶葉類', name: '包種茶', unit: '1箱5包', stock: 3, shortage: 0, normalStock: 5 },
+            
+            // 小料類
+            { category: '小料類', name: '珍珠', unit: '1箱12包', stock: 5, shortage: 3, normalStock: 10 },
+            { category: '小料類', name: '椰果', unit: '1箱6瓶', stock: 2, shortage: 1, normalStock: 5 },
+            { category: '小料類', name: '粉粿', unit: '1箱20包', stock: 10, shortage: 0, normalStock: 15 },
+            { category: '小料類', name: '仙草凍', unit: '1箱20包', stock: 8, shortage: 1, normalStock: 12 },
+            { category: '小料類', name: '布丁', unit: '1箱10包', stock: 4, shortage: 0, normalStock: 8 },
+            { category: '小料類', name: '蘆薈', unit: '1箱6瓶', stock: 3, shortage: 0, normalStock: 5 },
+            { category: '小料類', name: '紅豆', unit: '1箱12包', stock: 6, shortage: 1, normalStock: 10 },
+            { category: '小料類', name: '綠豆', unit: '1箱12包', stock: 2, shortage: 0, normalStock: 6 },
+            { category: '小料類', name: '薏仁', unit: '1箱12包', stock: 1, shortage: 0, normalStock: 4 },
+            { category: '小料類', name: 'QQ', unit: '1箱12包', stock: 5, shortage: 0, normalStock: 8 },
+            { category: '小料類', name: '芋圓', unit: '1箱10包', stock: 3, shortage: 1, normalStock: 6 },
+            { category: '小料類', name: '地瓜圓', unit: '1箱10包', stock: 2, shortage: 0, normalStock: 5 },
+            { category: '小料類', name: '水晶粉圓', unit: '1箱12包', stock: 0, shortage: 2, normalStock: 6 },
+            
+            // 包材類
+            { category: '包材類', name: '500ml杯子', unit: '1箱1000個', stock: 3, shortage: 1, normalStock: 5 },
+            { category: '包材類', name: '700ml杯子', unit: '1箱1000個', stock: 2, shortage: 0, normalStock: 4 },
+            { category: '包材類', name: '封口膜', unit: '1箱50卷', stock: 5, shortage: 2, normalStock: 10 },
+            { category: '包材類', name: '吸管-粗', unit: '1箱5000支', stock: 2, shortage: 0, normalStock: 4 },
+            { category: '包材類', name: '吸管-細', unit: '1箱5000支', stock: 3, shortage: 0, normalStock: 5 },
+            { category: '包材類', name: '杯蓋', unit: '1箱1000個', stock: 4, shortage: 0, normalStock: 6 },
+            { category: '包材類', name: '提袋-小', unit: '1箱1000個', stock: 5, shortage: 1, normalStock: 8 },
+            { category: '包材類', name: '提袋-大', unit: '1箱500個', stock: 3, shortage: 0, normalStock: 5 },
+            { category: '包材類', name: '湯匙', unit: '1箱2000支', stock: 2, shortage: 0, normalStock: 4 },
+            { category: '包材類', name: '叉子', unit: '1箱2000支', stock: 1, shortage: 0, normalStock: 3 },
+            { category: '包材類', name: '餐巾紙', unit: '1箱100包', stock: 8, shortage: 0, normalStock: 10 },
+            { category: '包材類', name: '清潔用品', unit: '套組', stock: 1, shortage: 0, normalStock: 2 },
+            { category: '包材類', name: '垃圾袋', unit: '1箱100入', stock: 2, shortage: 0, normalStock: 4 },
+            { category: '包材類', name: '衛生紙', unit: '1箱60包', stock: 4, shortage: 0, normalStock: 6 },
+            { category: '包材類', name: '洗碗精', unit: '瓶', stock: 2, shortage: 0, normalStock: 3 },
+            { category: '包材類', name: '六杯架', unit: '1箱600個', stock: 0, shortage: 0, normalStock: 2 },
+            { category: '包材類', name: '高涵養量酵素', unit: '單包購', stock: 1, shortage: 0, normalStock: 2 },
+            { category: '包材類', name: 'AP共用膜', unit: '1箱6卷', stock: 0, shortage: 0, normalStock: 2 },
+            { category: '包材類', name: '大環保瓶含蓋', unit: '1箱100入', stock: 2, shortage: 0, normalStock: 4 },
+            { category: '包材類', name: 'PP袋 4*6傳單', unit: '單包購', stock: 0, shortage: 0, normalStock: 2 },
+            { category: '包材類', name: '功夫茶標籤紙', unit: '1條5卷', stock: 0, shortage: 0, normalStock: 2 }
+        ];
+
+        let inventory = [];
+        let currentView = 'quick';
+        let usageLog = [];
+        let quickFilterCategory = 'all';
+        
+        // Apps Script 設定
+        let APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMoHlG6eVKFERMNd5Bv7J2w6kcyeiZFw8dW9fT_8alkygScZIC-e6-qwiiRX013YL2CA/exec';
+        
+        // 從localStorage讀取設定
+        function loadSheetsConfig() {
+            const saved = localStorage.getItem('appsScriptUrl');
+            if (saved) {
+                APPS_SCRIPT_URL = saved;
+            } else {
+                // 第一次使用時保存預設 URL
+                localStorage.setItem('appsScriptUrl', APPS_SCRIPT_URL);
+            }
+        }
+        
+        // 保存設定
+        function saveSheetsConfig() {
+            localStorage.setItem('appsScriptUrl', APPS_SCRIPT_URL);
+        }
+
+        // 監聽來自 iframe 的同步結果
+        window.addEventListener('message', function(event) {
+            // 處理同步結果
+            if (event.data && event.data.success !== undefined) {
+                const syncBtn = document.getElementById('syncBtn');
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '⭐ 💾 儲存到雲端Excel ⭐';
+                }
+                
+                if (event.data.success) {
+                    showStatus(`✅ 儲存成功！已上傳 ${event.data.count || inventory.length} 項商品到雲端`, 'success');
+                } else {
+                    showStatus(`❌ 儲存失敗: ${event.data.error || '未知錯誤'}`, 'error');
+                }
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            const savedView = localStorage.getItem('viewMode') || 'quick';
+            currentView = savedView;
+            
+            if (inventory.length === 0) {
+                loadSampleData();
+            } else {
+                renderData();
+                updateStats();
+            }
+            
+            updateViewButtons();
+        });
+
+        // 從本地儲存載入
+        function loadFromStorage() {
+            const saved = localStorage.getItem('inventory');
+            if (saved) {
+                inventory = JSON.parse(saved);
+            }
+            
+            const savedLog = localStorage.getItem('usageLog');
+            if (savedLog) {
+                usageLog = JSON.parse(savedLog);
+                // 只保留今天的記錄
+                const today = new Date().toDateString();
+                usageLog = usageLog.filter(log => new Date(log.time).toDateString() === today);
+            }
+        }
+
+        // 儲存到本地
+        function saveToStorage() {
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            showStatus('✅ 已自動儲存', 'success');
+        }
+
+        // 載入範例資料
+        function loadSampleData() {
+            inventory = JSON.parse(JSON.stringify(defaultData));
+            saveToStorage();
+            renderData();
+            updateStats();
+            showStatus('✅ 範例資料已載入', 'success');
+        }
+
+        // 切換視圖
+        function switchView(view) {
+            currentView = view;
+            localStorage.setItem('viewMode', view);
+            updateViewButtons();
+            renderData();
+        }
+
+        // 更新視圖按鈕狀態
+        function updateViewButtons() {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const container = document.querySelector('.container');
+            container.classList.remove('view-card', 'view-quick', 'view-order');
+            
+            const buttons = document.querySelectorAll('.view-btn');
+            if (currentView === 'table') {
+                buttons[0].classList.add('active');
+            } else if (currentView === 'card') {
+                buttons[1].classList.add('active');
+                container.classList.add('view-card');
+            } else if (currentView === 'quick') {
+                buttons[2].classList.add('active');
+                container.classList.add('view-quick');
+            } else if (currentView === 'order') {
+                buttons[3].classList.add('active');
+                container.classList.add('view-order');
+            }
+        }
+
+        // 統一渲染入口
+        function renderData(filteredData = null) {
+            if (currentView === 'table') {
+                renderTable(filteredData);
+            } else if (currentView === 'card') {
+                renderCards(filteredData);
+            } else if (currentView === 'quick') {
+                renderQuickView(filteredData);
+            } else if (currentView === 'order') {
+                renderOrderList();
+            }
+        }
+
+        // 顯示表格
+        function renderTable(filteredData = null) {
+            const data = filteredData || inventory;
+            const tbody = document.getElementById('tableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">暫無資料，請點擊「載入範例資料」</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, index) => {
+                const originalIndex = inventory.indexOf(item);
+                const isLow = item.stock <= 3;
+                const hasShortage = item.shortage > 0;
+                const stockClass = isLow ? 'stock-low' : '';
+                
+                let statusText = '';
+                if (item.stock === 0) {
+                    statusText = '🔴 缺貨';
+                } else if (isLow) {
+                    statusText = '⚠️ 低庫存';
+                } else if (hasShortage) {
+                    statusText = '📋 需補貨';
+                } else {
+                    statusText = '✅ 正常';
+                }
+                
+                const stepValue = item.allowDecimal ? '0.1' : '1';
+                const changeValue = item.allowDecimal ? 0.1 : 1;
+                
+                return `
+                    <tr>
+                        <td><strong>${item.category}</strong></td>
+                        <td>${item.name}${item.note ? '<br><small style="color: #ff6b6b;">' + item.note + '</small>' : ''}</td>
+                        <td>${item.unit}</td>
+                        <td>
+                            <input type="number" 
+                                   class="stock-input" 
+                                   value="${item.normalStock || 0}" 
+                                   onchange="updateStock(${originalIndex}, this.value, 'normalStock')"
+                                   min="0"
+                                   step="${stepValue}">
+                        </td>
+                        <td>
+                            <input type="number" 
+                                   class="stock-input ${stockClass}" 
+                                   value="${item.stock}" 
+                                   onchange="updateStock(${originalIndex}, this.value, 'stock')"
+                                   min="0"
+                                   step="${stepValue}">
+                        </td>
+                        <td>
+                            <input type="number" 
+                                   class="stock-input ${hasShortage ? 'stock-low' : ''}" 
+                                   value="${item.shortage || 0}" 
+                                   onchange="updateStock(${originalIndex}, this.value, 'shortage')"
+                                   min="0"
+                                   step="1">
+                        </td>
+                        <td>
+                            <button class="qty-btn btn-minus" onclick="changeStock(${originalIndex}, -${changeValue})">-</button>
+                            <button class="qty-btn btn-plus" onclick="changeStock(${originalIndex}, ${changeValue})">+</button>
+                            <button class="qty-btn btn-restock" onclick="showRestockDialog(${originalIndex})">📦 補貨</button>
+                        </td>
+                        <td>${statusText}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 顯示卡片視圖
+        function renderCards(filteredData = null) {
+            const data = filteredData || inventory;
+            const cardView = document.getElementById('cardView');
+            
+            if (data.length === 0) {
+                cardView.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">暫無資料，請點擊「載入範例資料」</div>';
+                return;
+            }
+
+            // 按類別分組
+            const categories = {};
+            data.forEach(item => {
+                if (!categories[item.category]) {
+                    categories[item.category] = [];
+                }
+                categories[item.category].push(item);
+            });
+
+            // 渲染每個類別
+            let html = '';
+            Object.keys(categories).forEach(category => {
+                const items = categories[category];
+                const categoryIcon = getCategoryIcon(category);
+                
+                html += `
+                    <div class="category-section">
+                        <div class="category-title">
+                            ${categoryIcon} ${category}
+                            <span class="category-count">${items.length} 項</span>
+                        </div>
+                        <div class="cards-grid">
+                `;
+                
+                items.forEach(item => {
+                    const originalIndex = inventory.indexOf(item);
+                    const isLow = item.stock <= 3 && item.stock > 0;
+                    const isOutOfStock = item.stock === 0;
+                    const hasShortage = item.shortage > 0;
+                    
+                    let cardClass = 'item-card';
+                    let statusBadge = '✅';
+                    
+                    if (isOutOfStock) {
+                        cardClass += ' out-of-stock';
+                        statusBadge = '🔴';
+                    } else if (isLow) {
+                        cardClass += ' low-stock';
+                        statusBadge = '⚠️';
+                    } else if (hasShortage) {
+                        statusBadge = '📋';
+                    }
+                    
+                    const stepValue = item.allowDecimal ? '0.1' : '1';
+                    const changeValue = item.allowDecimal ? 0.1 : 1;
+                    
+                    html += `
+                        <div class="${cardClass}">
+                            <div class="card-header">
+                                <div>
+                                    <div class="item-name">${item.name}</div>
+                                    <span class="item-unit">${item.unit}</span>
+                                    ${item.note ? '<div style="font-size: 0.75em; color: #ff6b6b; margin-top: 3px;">' + item.note + '</div>' : ''}
+                                </div>
+                                <span class="status-badge">${statusBadge}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="stock-row">
+                                    <span class="stock-label">📊 常態庫存</span>
+                                    <input type="number" 
+                                           class="stock-input-card" 
+                                           value="${item.normalStock || 0}" 
+                                           onchange="updateStock(${originalIndex}, this.value, 'normalStock')"
+                                           min="0"
+                                           step="${stepValue}">
+                                </div>
+                                <div class="stock-row">
+                                    <span class="stock-label">💼 現有庫存</span>
+                                    <input type="number" 
+                                           class="stock-input-card ${isLow || isOutOfStock ? 'stock-low' : ''}" 
+                                           value="${item.stock}" 
+                                           onchange="updateStock(${originalIndex}, this.value, 'stock')"
+                                           min="0"
+                                           step="${stepValue}">
+                                </div>
+                                <div class="shortage-row">
+                                    <span class="stock-label">📦 短缺數量</span>
+                                    <input type="number" 
+                                           class="stock-input-card ${hasShortage ? 'stock-low' : ''}" 
+                                           value="${item.shortage || 0}" 
+                                           onchange="updateStock(${originalIndex}, this.value, 'shortage')"
+                                           min="0"
+                                           step="1">
+                                </div>
+                                <div class="card-actions">
+                                    <button class="qty-btn btn-minus" onclick="changeStock(${originalIndex}, -${changeValue})">➖ ${item.allowDecimal ? '0.1' : '1'}</button>
+                                    <button class="qty-btn btn-plus" onclick="changeStock(${originalIndex}, ${changeValue})">➕ ${item.allowDecimal ? '0.1' : '1'}</button>
+                                </div>
+                                <div class="card-actions" style="margin-top: 5px;">
+                                    <button class="qty-btn btn-restock" onclick="showRestockDialog(${originalIndex})" style="width: 100%;">📦 補貨到貨</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cardView.innerHTML = html;
+        }
+
+        // 取得類別圖示
+        function getCategoryIcon(category) {
+            const icons = {
+                '果露類': '🍊',
+                '粉類': '🥄',
+                '糖類': '🍯',
+                '茶葉類': '🍵',
+                '小料類': '🧋',
+                '包材類': '📦'
+            };
+            return icons[category] || '📌';
+        }
+
+        // 顯示快速使用視圖
+        function renderQuickView(filteredData = null) {
+            const quickView = document.getElementById('quickView');
+            
+            let data = filteredData || inventory;
+            
+            // 根據類別過濾
+            if (quickFilterCategory !== 'all') {
+                data = data.filter(item => item.category === quickFilterCategory);
+            }
+            
+            if (data.length === 0) {
+                quickView.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">暫無資料</div>';
+                return;
+            }
+
+            // 取得所有類別
+            const categories = ['all', ...new Set(inventory.map(item => item.category))];
+            
+            let html = `
+                <div class="quick-search">
+                    <input type="text" 
+                           id="quickSearchInput" 
+                           placeholder="🔍 快速搜尋商品..." 
+                           oninput="quickSearch(this.value)">
+                </div>
+
+                <div class="quick-category-filter">
+                    ${categories.map(cat => `
+                        <button class="filter-btn ${quickFilterCategory === cat ? 'active' : ''}" 
+                                onclick="filterQuickCategory('${cat}')">
+                            ${cat === 'all' ? '🌟 全部' : getCategoryIcon(cat) + ' ' + cat}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+
+            // 使用記錄
+            if (usageLog.length > 0) {
+                html += `
+                    <div class="usage-log">
+                        <h4>📝 今日使用記錄（${usageLog.length} 筆）<span style="color: #999; font-size: 0.8em; margin-left: 10px;">點擊刪除可回補庫存</span></h4>
+                        ${usageLog.slice().reverse().map((log, index) => {
+                            const originalIndex = usageLog.length - 1 - index;
+                            return `
+                                <div class="usage-item ${log.recent ? 'recent' : ''}">
+                                    <div>
+                                        <strong>${log.itemName}</strong>
+                                        <span style="color: #666; margin-left: 10px;">-${log.amount || 1}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span class="usage-time">${new Date(log.time).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <button class="usage-delete-btn" onclick="deleteUsageLog(${originalIndex})">✕ 刪除</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).slice(0, 10).join('')}
+                    </div>
+                `;
+            }
+
+            // 商品卡片
+            html += '<div class="cards-grid">';
+            
+            data.forEach((item, index) => {
+                const originalIndex = inventory.indexOf(item);
+                const isLow = item.stock <= 3 && item.stock > 0;
+                const isOutOfStock = item.stock === 0;
+                
+                let cardClass = 'quick-item';
+                let stockClass = 'ok';
+                let badge = '';
+                
+                if (isOutOfStock) {
+                    cardClass += ' out-of-stock';
+                    stockClass = 'out';
+                    badge = '🔴';
+                } else if (isLow) {
+                    cardClass += ' low-stock';
+                    stockClass = 'low';
+                    badge = '⚠️';
+                }
+                
+                const useAmount = item.allowDecimal ? 0.1 : 1;
+                const disabled = isOutOfStock ? '' : `onclick="quickUseItem(${originalIndex}, ${useAmount})"`;
+                
+                html += `
+                    <div class="${cardClass}" ${disabled}>
+                        <div class="quick-item-badge">${badge}</div>
+                        <div class="quick-item-name">${item.name}</div>
+                        ${item.note ? '<div style="font-size: 0.75em; color: #ff6b6b; margin: 3px 0;">' + item.note + '</div>' : ''}
+                        <div class="quick-item-stock ${stockClass}">${item.stock}</div>
+                        <div class="quick-item-unit">${item.unit}</div>
+                        <div style="margin-top: 10px; color: #999; font-size: 0.9em;">
+                            ${isOutOfStock ? '已缺貨' : `點擊使用 -${useAmount}`}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            quickView.innerHTML = html;
+        }
+
+        // 快速使用商品
+        function quickUseItem(index, amount = 1) {
+            if (inventory[index].stock < amount) {
+                showStatus('❌ 庫存不足，無法使用', 'error');
+                return;
+            }
+            
+            inventory[index].stock = Math.round((inventory[index].stock - amount) * 10) / 10;
+            
+            // 記錄使用
+            const log = {
+                itemName: inventory[index].name,
+                category: inventory[index].category,
+                amount: amount,
+                remainingStock: inventory[index].stock,
+                time: new Date().toISOString(),
+                recent: true,
+                deleted: false
+            };
+            usageLog.push(log);
+            
+            // 保存到本地
+            localStorage.setItem('usageLog', JSON.stringify(usageLog));
+            saveToStorage();
+            
+            // 同步記錄到 Google Sheets
+            syncUsageLogToSheets(log);
+            
+            // 更新顯示
+            renderQuickView();
+            updateStats();
+            
+            // 移除recent標記
+            setTimeout(() => {
+                if (usageLog.length > 0) {
+                    usageLog[usageLog.length - 1].recent = false;
+                }
+            }, 500);
+            
+            showStatus(`✅ ${inventory[index].name} 已使用 ${amount}，剩餘 ${inventory[index].stock}`, 'success');
+        }
+
+        // 快速搜尋
+        function quickSearch(search) {
+            if (!search) {
+                renderQuickView();
+                return;
+            }
+            
+            const filtered = inventory.filter(item => 
+                item.name.toLowerCase().includes(search.toLowerCase()) ||
+                item.category.toLowerCase().includes(search.toLowerCase())
+            );
+            renderQuickView(filtered);
+        }
+
+        // 過濾類別
+        function filterQuickCategory(category) {
+            quickFilterCategory = category;
+            renderQuickView();
+        }
+
+        // 刪除使用記錄並回補庫存
+        function deleteUsageLog(logIndex) {
+            if (!confirm('確定要刪除此記錄並回補庫存嗎？')) {
+                return;
+            }
+            
+            const log = usageLog[logIndex];
+            
+            // 找到對應的商品並回補庫存
+            const itemIndex = inventory.findIndex(item => item.name === log.itemName);
+            
+            if (itemIndex !== -1) {
+                const amount = log.amount || 1;
+                inventory[itemIndex].stock = Math.round((inventory[itemIndex].stock + amount) * 10) / 10;
+                
+                // 記錄刪除回補操作到 Sheets
+                const deleteLog = {
+                    itemName: log.itemName,
+                    category: log.category,
+                    amount: amount,
+                    remainingStock: inventory[itemIndex].stock,
+                    time: new Date().toISOString(),
+                    deleted: true
+                };
+                syncUsageLogToSheets(deleteLog);
+                
+                // 刪除本地記錄
+                usageLog.splice(logIndex, 1);
+                
+                // 保存
+                localStorage.setItem('usageLog', JSON.stringify(usageLog));
+                saveToStorage();
+                
+                // 更新顯示
+                renderQuickView();
+                updateStats();
+                
+                showStatus(`✅ 已刪除記錄並回補 ${log.itemName} ${amount}，當前庫存 ${inventory[itemIndex].stock}`, 'success');
+            } else {
+                showStatus('❌ 找不到對應商品', 'error');
+            }
+        }
+
+        // 顯示叫貨清單
+        function renderOrderList() {
+            const orderView = document.getElementById('orderView');
+            
+            // 计算需要叫货的商品
+            const needOrder = inventory.filter(item => {
+                const normalStock = item.normalStock || 0;
+                const currentStock = item.stock || 0;
+                return currentStock < normalStock;
+            }).map(item => {
+                const normalStock = item.normalStock || 0;
+                const currentStock = item.stock || 0;
+                const needQuantity = normalStock - currentStock;
+                return { ...item, needQuantity };
+            });
+
+            if (needOrder.length === 0) {
+                orderView.innerHTML = `
+                    <div style="text-align: center; padding: 60px;">
+                        <div style="font-size: 3em; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #38ef7d;">庫存充足！</h2>
+                        <p style="color: #666; margin-top: 10px;">目前沒有需要補貨的商品</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 统计数据
+            const totalItems = needOrder.length;
+            const totalQuantity = needOrder.reduce((sum, item) => sum + item.needQuantity, 0);
+            const urgentItems = needOrder.filter(item => item.stock === 0).length;
+
+            let html = `
+                <div class="order-summary">
+                    <h3>📋 叫貨清單總覽</h3>
+                    <div class="order-stats">
+                        <div class="order-stat-item">
+                            <div class="order-stat-label">需補貨品項</div>
+                            <div class="order-stat-value">${totalItems}</div>
+                        </div>
+                        <div class="order-stat-item">
+                            <div class="order-stat-label">總需求數量</div>
+                            <div class="order-stat-value">${totalQuantity}</div>
+                        </div>
+                        <div class="order-stat-item">
+                            <div class="order-stat-label">急需補貨（缺貨）</div>
+                            <div class="order-stat-value">${urgentItems}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-table-container">
+                    <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th>優先級</th>
+                            <th>類別</th>
+                            <th>商品名稱</th>
+                            <th>單位</th>
+                            <th>常態庫存</th>
+                            <th>現有庫存</th>
+                            <th>需補貨數量</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // 按优先级排序：缺货 > 低库存 > 其他
+            needOrder.sort((a, b) => {
+                if (a.stock === 0 && b.stock !== 0) return -1;
+                if (a.stock !== 0 && b.stock === 0) return 1;
+                if (a.stock <= 3 && b.stock > 3) return -1;
+                if (a.stock > 3 && b.stock <= 3) return 1;
+                return b.needQuantity - a.needQuantity;
+            });
+
+            needOrder.forEach((item, index) => {
+                let priority = '';
+                let priorityClass = '';
+                
+                if (item.stock === 0) {
+                    priority = '🔴 緊急';
+                    priorityClass = 'urgent';
+                } else if (item.stock <= 3) {
+                    priority = '⚠️ 優先';
+                    priorityClass = 'high';
+                } else {
+                    priority = '📋 一般';
+                    priorityClass = 'normal';
+                }
+
+                html += `
+                    <tr>
+                        <td><span class="need-order-badge">${priority}</span></td>
+                        <td><strong>${item.category}</strong></td>
+                        <td>${item.name}</td>
+                        <td>${item.unit}</td>
+                        <td>${item.normalStock}</td>
+                        <td style="color: ${item.stock === 0 ? '#dc3545' : (item.stock <= 3 ? '#ff6b6b' : '#333')}">
+                            <strong>${item.stock}</strong>
+                        </td>
+                        <td style="color: #ff6b6b; font-weight: bold; font-size: 1.1em;">
+                            ${item.needQuantity}
+                        </td>
+                        <td>${item.stock === 0 ? '⚠️ 已缺貨' : (item.stock <= 3 ? '即將用完' : '正常補貨')}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+                </div>
+            `;
+
+            orderView.innerHTML = html;
+        }
+
+        // 匯出叫貨清單
+        function exportOrderList() {
+            const needOrder = inventory.filter(item => {
+                const normalStock = item.normalStock || 0;
+                const currentStock = item.stock || 0;
+                return currentStock < normalStock;
+            }).map(item => {
+                const normalStock = item.normalStock || 0;
+                const currentStock = item.stock || 0;
+                const needQuantity = normalStock - currentStock;
+                return { ...item, needQuantity };
+            });
+
+            if (needOrder.length === 0) {
+                showStatus('✅ 目前沒有需要補貨的商品', 'success');
+                return;
+            }
+
+            // 排序
+            needOrder.sort((a, b) => {
+                if (a.stock === 0 && b.stock !== 0) return -1;
+                if (a.stock !== 0 && b.stock === 0) return 1;
+                if (a.stock <= 3 && b.stock > 3) return -1;
+                if (a.stock > 3 && b.stock <= 3) return 1;
+                return b.needQuantity - a.needQuantity;
+            });
+
+            let csv = '優先級,類別,商品名稱,單位,常態庫存,現有庫存,需補貨數量,備註\n';
+            needOrder.forEach(item => {
+                let priority = '';
+                let note = '';
+                
+                if (item.stock === 0) {
+                    priority = '緊急';
+                    note = '已缺貨';
+                } else if (item.stock <= 3) {
+                    priority = '優先';
+                    note = '即將用完';
+                } else {
+                    priority = '一般';
+                    note = '正常補貨';
+                }
+
+                csv += `${priority},${item.category},${item.name},${item.unit},${item.normalStock},${item.stock},${item.needQuantity},${note}\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `叫貨清單_楊梅四維店_${today}.csv`);
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus(`✅ 叫貨清單已下載！共 ${needOrder.length} 項商品需要補貨`, 'success');
+        }
+
+        // 更新庫存
+        function updateStock(index, value, field = 'stock') {
+            // 對於允許小數的商品，使用parseFloat，否則使用parseInt
+            const newValue = inventory[index].allowDecimal ? parseFloat(value) : parseInt(value);
+            
+            if (isNaN(newValue) || newValue < 0) {
+                showStatus('❌ 請輸入有效的數字', 'error');
+                renderData();
+                return;
+            }
+            
+            // 對小數進行四捨五入到一位小數
+            const finalValue = inventory[index].allowDecimal ? 
+                Math.round(newValue * 10) / 10 : 
+                newValue;
+            
+            if (field === 'stock') {
+                inventory[index].stock = finalValue;
+            } else if (field === 'shortage') {
+                inventory[index].shortage = parseInt(value); // 短缺數量始終是整數
+            } else if (field === 'normalStock') {
+                inventory[index].normalStock = finalValue;
+            }
+            
+            saveToStorage();
+            renderData();
+            updateStats();
+        }
+
+        // 增減庫存
+        function changeStock(index, change) {
+            let newStock = inventory[index].stock + change;
+            
+            // 對小數進行四捨五入到一位小數
+            if (inventory[index].allowDecimal) {
+                newStock = Math.round(newStock * 10) / 10;
+            }
+            
+            if (newStock < 0) {
+                showStatus('❌ 庫存不能為負數', 'error');
+                return;
+            }
+            
+            inventory[index].stock = newStock;
+            saveToStorage();
+            renderData();
+            updateStats();
+        }
+
+        // 更新統計
+        function updateStats() {
+            document.getElementById('totalItems').textContent = inventory.length;
+            document.getElementById('lowStock').textContent = 
+                inventory.filter(item => item.stock <= 3 && item.stock > 0).length;
+            document.getElementById('needRestock').textContent = 
+                inventory.filter(item => item.shortage > 0).length;
+            document.getElementById('outOfStock').textContent = 
+                inventory.filter(item => item.stock === 0).length;
+        }
+
+        // 搜尋過濾
+        function filterData() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            if (!search) {
+                renderData();
+                return;
+            }
+
+            const filtered = inventory.filter(item => 
+                item.name.toLowerCase().includes(search) ||
+                item.category.toLowerCase().includes(search)
+            );
+            renderData(filtered);
+        }
+
+        // 匯出 CSV
+        function exportToCSV() {
+            if (inventory.length === 0) {
+                showStatus('❌ 沒有資料可以匯出', 'error');
+                return;
+            }
+
+            let csv = '類別,商品名稱,單位,常態庫存,現有庫存,短缺數量\n';
+            inventory.forEach(item => {
+                csv += `${item.category},${item.name},${item.unit},${item.normalStock || 0},${item.stock},${item.shortage || 0}\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `功夫茶庫存_楊梅四維店_${today}.csv`);
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus('✅ CSV 檔案已下載！可在 Excel 或 Google Sheets 中開啟', 'success');
+        }
+
+        // 清空資料
+        function clearAllData() {
+            if (confirm('確定要清空所有資料嗎？此操作無法復原！')) {
+                inventory = [];
+                localStorage.removeItem('inventory');
+                renderData();
+                updateStats();
+                showStatus('✅ 所有資料已清空', 'success');
+            }
+        }
+
+        // 顯示狀態
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            setTimeout(() => {
+                status.className = 'status';
+            }, 3000);
+        }
+
+        // 切換使用說明框
+        function toggleInfoBox() {
+            const infoBox = document.getElementById('infoBox');
+            const infoBoxContent = infoBox.querySelector('.info-box-content');
+            
+            // 第一次點擊時移除內聯樣式，讓 CSS 類來控制
+            if (infoBoxContent && infoBoxContent.hasAttribute('style')) {
+                infoBoxContent.removeAttribute('style');
+            }
+            
+            infoBox.classList.toggle('collapsed');
+            
+            // 不記住用戶偏好，確保刷新後總是收合
+            // localStorage.setItem('infoBoxCollapsed', 'true');
+        }
+
+        // 載入使用說明框狀態
+        function loadInfoBoxState() {
+            const isCollapsed = localStorage.getItem('infoBoxCollapsed');
+            if (isCollapsed === 'false') {
+                document.getElementById('infoBox').classList.remove('collapsed');
+            }
+        }
+
+        // 在初始化時載入使用說明框狀態（已停用，預設收合）
+        window.addEventListener('DOMContentLoaded', () => {
+            // loadInfoBoxState();  // 註解掉：確保快速上手指南預設收合
+            // 強制設置為收合狀態
+            const infoBox = document.getElementById('infoBox');
+            if (infoBox && !infoBox.classList.contains('collapsed')) {
+                infoBox.classList.add('collapsed');
+            }
+            localStorage.setItem('infoBoxCollapsed', 'true');  // 更新本地儲存
+            loadSheetsConfig();
+        });
+
+        // 顯示 Apps Script 設定對話框
+        function showSheetsConfig() {
+            const currentUrl = APPS_SCRIPT_URL || 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+            
+            const message = `請輸入 Apps Script URL:\n\n` +
+                          `範例格式：\n` +
+                          `https://script.google.com/macros/s/.../exec\n\n` +
+                          `如何取得 URL：\n` +
+                          `1. 開啟 Google Sheets\n` +
+                          `2. 擴充功能 → Apps Script\n` +
+                          `3. 貼上程式碼並部署\n` +
+                          `4. 複製網路應用程式 URL`;
+            
+            const url = prompt(message, currentUrl);
+            
+            if (url === null) return;
+            
+            if (!url || !url.includes('script.google.com')) {
+                showStatus('❌ 請輸入有效的 Apps Script URL', 'error');
+                return;
+            }
+            
+            APPS_SCRIPT_URL = url.trim();
+            saveSheetsConfig();
+            showStatus('✅ Apps Script URL 已儲存', 'success');
+        }
+
+        // 同步到 Google Sheets（使用隱藏表單避免 CORS）
+        function syncToSheets() {
+            if (!APPS_SCRIPT_URL) {
+                showStatus('❌ 請先設定 Apps Script URL', 'error');
+                showSheetsConfig();
+                return;
+            }
+            
+            const syncBtn = document.getElementById('syncBtn');
+            syncBtn.disabled = true;
+            syncBtn.textContent = '⏳ 儲存中...請稍候';
+            
+            // 建立隱藏的 iframe 來接收回應
+            let iframe = document.getElementById('syncFrame');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'syncFrame';
+                iframe.name = 'syncFrame';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+            
+            // 建立表單
+            let form = document.getElementById('syncForm');
+            if (!form) {
+                form = document.createElement('form');
+                form.id = 'syncForm';
+                form.method = 'POST';
+                form.target = 'syncFrame';
+                form.style.display = 'none';
+                document.body.appendChild(form);
+            }
+            
+            // 設定表單
+            form.action = APPS_SCRIPT_URL;
+            form.innerHTML = '';
+            
+            // 建立資料輸入
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify({
+                action: 'syncInventory',
+                inventory: inventory
+            });
+            form.appendChild(input);
+            
+            // 提交表單
+            form.submit();
+            
+            // 顯示成功訊息（因為無法得知實際結果）
+            setTimeout(() => {
+                syncBtn.disabled = false;
+                syncBtn.textContent = '⭐ 💾 儲存到雲端Excel ⭐';
+                showStatus(`✅ 已儲存到雲端Excel！資料已自動備份`, 'success');
+            }, 2000);
+        }
+
+        // 打開密碼彈窗
+        function showPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            const input = document.getElementById('passwordInput');
+            modal.classList.add('active');
+            input.value = '';
+            
+            // 自動聚焦到輸入框
+            setTimeout(() => {
+                input.focus();
+            }, 300);
+        }
+
+        // 關閉密碼彈窗
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            const input = document.getElementById('passwordInput');
+            const dialog = document.querySelector('.modal-dialog');
+            
+            modal.classList.remove('active');
+            input.value = '';
+            input.classList.remove('error', 'success');
+            dialog.classList.remove('success');
+        }
+
+        // 點擊背景關閉彈窗
+        function handleModalOverlayClick(event) {
+            if (event.target.id === 'passwordModal') {
+                closePasswordModal();
+            }
+        }
+
+        // 處理Enter鍵
+        function handlePasswordKeypress(event) {
+            if (event.key === 'Enter') {
+                verifyPassword();
+            }
+        }
+
+        // 驗證密碼並讀取資料
+        function verifyPassword() {
+            const input = document.getElementById('passwordInput');
+            const dialog = document.querySelector('.modal-dialog');
+            const password = input.value;
+            
+            if (!password) {
+                showStatus('❌ 請輸入密碼', 'error');
+                input.classList.add('error');
+                setTimeout(() => input.classList.remove('error'), 500);
+                return;
+            }
+            
+            if (password !== '0825') {
+                showStatus('❌ 密碼錯誤！只有店長/副店長可以讀取雲端資料', 'error');
+                input.classList.add('error');
+                input.value = '';
+                setTimeout(() => {
+                    input.classList.remove('error');
+                    input.focus();
+                }, 500);
+                return;
+            }
+            
+            // 密碼正確 - 顯示成功反饋
+            input.classList.add('success');
+            dialog.classList.add('success');
+            showStatus('✅ 密碼正確！正在讀取資料...', 'success');
+            
+            // 延遲關閉彈窗，讓用戶看到成功反饋
+            setTimeout(() => {
+                closePasswordModal();
+                performLoadFromSheets();
+            }, 600);
+        }
+
+        // 從 Google Sheets 讀取（使用 JSONP 避免 CORS）
+        function loadFromSheets() {
+            if (!APPS_SCRIPT_URL) {
+                showStatus('❌ 請先設定 Apps Script URL', 'error');
+                showSheetsConfig();
+                return;
+            }
+            
+            // 顯示密碼驗證彈窗
+            showPasswordModal();
+        }
+
+        // 執行實際的讀取操作
+        function performLoadFromSheets() {
+            showStatus('⏳ 正在從雲端Excel讀取資料...', 'info');
+            
+            // 使用 JSONP 技術
+            const callbackName = 'jsonpCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                console.log('讀取結果:', result);
+                
+                if (!result.success) {
+                    showStatus(`❌ 讀取失敗: ${result.error || '未知錯誤'}`, 'error');
+                    delete window[callbackName];
+                    return;
+                }
+                
+                if (!result.data || result.data.length === 0) {
+                    showStatus('⚠️ 雲端Excel中沒有資料。請聯絡管理員設定', 'error');
+                    delete window[callbackName];
+                    return;
+                }
+                
+                // 使用回傳的資料
+                inventory = result.data;
+                
+                saveToStorage();
+                renderData();
+                updateStats();
+                
+                showStatus(`✅ 成功從雲端Excel載入 ${inventory.length} 項商品！`, 'success');
+                
+                // 清理
+                delete window[callbackName];
+                const script = document.getElementById(callbackName);
+                if (script) {
+                    script.remove();
+                }
+            };
+            
+            // 建立 script 標籤
+            const script = document.createElement('script');
+            script.id = callbackName;
+            script.src = `${APPS_SCRIPT_URL}?action=getInventory&callback=${callbackName}`;
+            script.onerror = function() {
+                showStatus('❌ 讀取失敗，請檢查 URL 是否正確', 'error');
+                delete window[callbackName];
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        // 同步使用記錄到 Google Sheets
+        function syncUsageLogToSheets(log) {
+            if (!APPS_SCRIPT_URL) {
+                return; // 沒設定 URL 就不同步，只保存在本地
+            }
+            
+            // 建立隱藏表單
+            let form = document.getElementById('logForm');
+            if (!form) {
+                form = document.createElement('form');
+                form.id = 'logForm';
+                form.method = 'POST';
+                form.target = 'logFrame';
+                form.style.display = 'none';
+                document.body.appendChild(form);
+                
+                // 建立 iframe
+                const iframe = document.createElement('iframe');
+                iframe.name = 'logFrame';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+            
+            // 設定表單
+            form.action = APPS_SCRIPT_URL;
+            form.innerHTML = '';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify({
+                action: 'logUsage',
+                log: log
+            });
+            form.appendChild(input);
+            
+            // 提交
+            form.submit();
+        }
+
+        // 顯示補貨對話框
+        function showRestockDialog(index) {
+            const item = inventory[index];
+            const needRestock = Math.max(0, (item.normalStock || 0) - item.stock);
+            const suggestAmount = needRestock > 0 ? needRestock : 1;
+            
+            const quantity = prompt(
+                `📦 ${item.name} - 補貨到貨\n\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `📊 目前庫存：${item.stock} ${item.unit}\n` +
+                `🎯 常態庫存：${item.normalStock || 0} ${item.unit}\n` +
+                `⚠️  需要補貨：${needRestock} ${item.unit}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `💡 請輸入到貨數量：`,
+                suggestAmount
+            );
+            
+            if (quantity === null || quantity === '') {
+                return;
+            }
+            
+            const amount = parseFloat(quantity);
+            
+            if (isNaN(amount) || amount <= 0) {
+                showStatus('❌ 請輸入有效的數量', 'error');
+                return;
+            }
+            
+            // 直接补货，不再询问备注
+            restockItem(index, amount, '');
+        }
+
+        // 執行補貨
+        function restockItem(index, amount, note) {
+            const item = inventory[index];
+            const beforeStock = item.stock;
+            
+            // 增加庫存
+            item.stock = Math.round((item.stock + amount) * 10) / 10;
+            const afterStock = item.stock;
+            
+            // 記錄補貨
+            const log = {
+                itemName: item.name,
+                category: item.category,
+                amount: amount,
+                beforeStock: beforeStock,
+                afterStock: afterStock,
+                note: note,
+                time: new Date().toISOString()
+            };
+            
+            // 保存到本地
+            saveToStorage();
+            
+            // 同步記錄到 Google Sheets
+            syncRestockLogToSheets(log);
+            
+            // 更新顯示
+            renderData();
+            updateStats();
+            
+            showStatus(`✅ 補貨成功！${item.name} +${amount} | 庫存：${beforeStock} → ${afterStock}`, 'success');
+        }
+
+        // 同步補貨記錄到 Google Sheets
+        function syncRestockLogToSheets(log) {
+            if (!APPS_SCRIPT_URL) {
+                return;
+            }
+            
+            let form = document.getElementById('restockForm');
+            if (!form) {
+                form = document.createElement('form');
+                form.id = 'restockForm';
+                form.method = 'POST';
+                form.target = 'restockFrame';
+                form.style.display = 'none';
+                document.body.appendChild(form);
+                
+                const iframe = document.createElement('iframe');
+                iframe.name = 'restockFrame';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+            
+            form.action = APPS_SCRIPT_URL;
+            form.innerHTML = '';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify({
+                action: 'logRestock',
+                log: log
+            });
+            form.appendChild(input);
+            
+            form.submit();
+        }
+
+        // 自動同步（可選）
+        function enableAutoSync(intervalMinutes = 5) {
+            if (!APPS_SCRIPT_URL) {
+                console.warn('請先設定 Apps Script URL');
+                return;
+            }
+            
+            console.log(`已啟用自動同步，每 ${intervalMinutes} 分鐘同步一次`);
+            
+            setInterval(() => {
+                if (APPS_SCRIPT_URL) {
+                    console.log('自動同步中...');
+                    syncToSheets();
+                }
+            }, intervalMinutes * 60 * 1000);
+        }
+
+        // 下拉菜單控制
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const isActive = dropdown.classList.contains('active');
+            
+            // 關閉所有下拉菜單
+            document.querySelectorAll('.dropdown').forEach(d => {
+                d.classList.remove('active');
+            });
+            
+            // 切換當前下拉菜單
+            if (!isActive) {
+                dropdown.classList.add('active');
+            }
+        }
+
+        function closeDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.classList.remove('active');
+        }
+
+        // 點擊外部關閉下拉菜單
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(d => {
+                    d.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -71,6 +71,9 @@ const menuData = [
   { name: "泰式榴槤莎莎", category: "功夫・水果", prices: { 'L': 110 }, notes: "★ 熱銷限定, 冰沙", fixedOptions: { sugar: "", ice: "冰沙" }, noSugarOptions: true, canAddToppings: false },
 ];
 
+// 選用：由 window.KUNGFU_TEA_GOOGLE_MAPS_API_KEY 注入，未設定則不載入
+const GOOGLE_MAPS_API_KEY = (typeof window !== 'undefined' && window.KUNGFU_TEA_GOOGLE_MAPS_API_KEY ? window.KUNGFU_TEA_GOOGLE_MAPS_API_KEY : '').trim();
+
 // 全域變數
 let currentOrder = [];
 let currentBeverage = null;
@@ -285,9 +288,20 @@ function checkOrderInfo() {
 const storeAddress = "四維路90號, 楊梅區, 桃園市, 台灣";
 let distanceCalculationTimeout;
 
+function loadGoogleMapsAPI() {
+  if (!GOOGLE_MAPS_API_KEY) return;
+  if (typeof google !== 'undefined' && google.maps) return;
+  const script = document.createElement('script');
+  script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&libraries=geometry&callback=initDistanceCalculation';
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
 // 初始化距離計算功能
 function initDistanceCalculation() {
   const deliveryAddressInput = document.getElementById('delivery-address');
+  if (!deliveryAddressInput) return;
   let mapsAPILoaded = false;
 
   deliveryAddressInput.addEventListener('input', function () {
@@ -298,7 +312,7 @@ function initDistanceCalculation() {
     if (address.length > 5) {
       useBackupDistanceCalculation(address);
 
-      if (!mapsAPILoaded && typeof google === 'undefined') {
+      if (!mapsAPILoaded && typeof google === 'undefined' && GOOGLE_MAPS_API_KEY) {
         loadGoogleMapsAPI();
         mapsAPILoaded = true;
       }

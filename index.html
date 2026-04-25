@@ -2543,11 +2543,6 @@
 
         // 打開訂購模態框
         function openOrderModal(beverage) {
-          // 先檢查訂購資訊
-          if (!checkOrderInfo()) {
-            return;
-          }
-
           currentBeverage = beverage;
           modalTitle.textContent = beverage.name;
 
@@ -2559,6 +2554,7 @@
             const sizeBtn = document.createElement('div');
             sizeBtn.className = 'option-btn';
             if (index === 0) sizeBtn.classList.add('selected');
+            sizeBtn.dataset.size = size;
             sizeBtn.textContent = `${size} (${beverage.prices[size]})`;
             sizeBtn.onclick = () => selectOption(sizeBtn, 'size');
             sizeOptions.appendChild(sizeBtn);
@@ -2651,15 +2647,38 @@
           currentBeverage = null;
         }
 
+        // 統一計算訂單項目金額，避免出現 NaN 導致後台收到 0
+        function calculateOrderItemPrice(item) {
+          const sizeKey = String(item?.size || '').trim();
+          const basePrice = Number(item?.beverage?.prices?.[sizeKey]);
+          const quantity = Math.max(1, Number(item?.quantity) || 1);
+          let toppingsPrice = 0;
+
+          if (Array.isArray(item?.toppings)) {
+            item.toppings.forEach(toppingName => {
+              const topping = toppings.find(t => t.name === toppingName);
+              if (topping) toppingsPrice += Number(topping.price) || 0;
+            });
+          }
+
+          if (!Number.isFinite(basePrice)) return 0;
+          return (basePrice + toppingsPrice) * quantity;
+        }
+
         // 加入訂單
         function addToOrder() {
           if (!currentBeverage) return;
+          const beverageName = currentBeverage.name;
 
           const selectedSize = document.querySelector('#size-options .option-btn.selected');
           const selectedSugar = document.querySelector('#sugar-options .option-btn.selected');
           const selectedIce = document.querySelector('#ice-options .option-btn.selected');
           const selectedTea = document.querySelector('#tea-options .option-btn.selected');
           const selectedToppings = document.querySelectorAll('#toppings-options .option-btn.selected');
+          const sugarGroup = document.getElementById('sugar-group');
+          const iceGroup = document.getElementById('ice-group');
+          const teaGroup = document.getElementById('tea-group');
+          const toppingsGroup = document.getElementById('toppings-group');
           const quantity = parseInt(quantityInput.value) || 1;
 
           if (!selectedSize) {
@@ -2668,41 +2687,32 @@
           }
 
           // 構建訂單項目
+          const selectedSizeValue = selectedSize.dataset.size || selectedSize.textContent.split(' ')[0];
           const orderItem = {
             beverage: currentBeverage,
-            size: selectedSize.textContent.split(' (')[0],
+            size: selectedSizeValue,
             quantity: quantity,
             price: 0
           };
 
           // 添加選項
-          if (selectedSugar && sugarGroup.style.display !== 'none') {
+          if (selectedSugar && sugarGroup && sugarGroup.style.display !== 'none') {
             orderItem.sugar = selectedSugar.dataset.value;
           }
-          if (selectedIce && iceGroup.style.display !== 'none') {
+          if (selectedIce && iceGroup && iceGroup.style.display !== 'none') {
             orderItem.ice = selectedIce.dataset.value;
           }
-          if (selectedTea && teaGroup.style.display !== 'none') {
+          if (selectedTea && teaGroup && teaGroup.style.display !== 'none') {
             orderItem.tea = selectedTea.dataset.teaValue;
           }
 
           // 添加加料
-          if (selectedToppings.length > 0 && toppingsGroup.style.display !== 'none') {
+          if (selectedToppings.length > 0 && toppingsGroup && toppingsGroup.style.display !== 'none') {
             orderItem.toppings = Array.from(selectedToppings).map(btn => btn.dataset.toppingName);
           }
 
           // 計算價格
-          const basePrice = currentBeverage.prices[orderItem.size];
-          let toppingsPrice = 0;
-          if (orderItem.toppings) {
-            orderItem.toppings.forEach(toppingName => {
-              const topping = toppings.find(t => t.name === toppingName);
-              if (topping) {
-                toppingsPrice += topping.price;
-              }
-            });
-          }
-          orderItem.price = (basePrice + toppingsPrice) * quantity;
+          orderItem.price = calculateOrderItemPrice(orderItem);
 
           // 添加到訂單
           currentOrder.push(orderItem);
@@ -2715,7 +2725,7 @@
           closeOrderModal();
 
           // 顯示成功訊息
-          showCuteAlert('已加入訂單！', `${currentBeverage.name} 已成功加入您的訂單中～`, '🎉');
+          showCuteAlert('已加入訂單！', `${beverageName} 已成功加入您的訂單中～`, '🎉');
         }
 
         // 選擇選項
@@ -2836,92 +2846,6 @@
           });
         }
 
-        // 加入訂單
-        addToOrderBtn.onclick = () => {
-          const selectedSizeBtn = document.querySelector('#size-options .option-btn.selected');
-          const sizeText = selectedSizeBtn.textContent;
-          const size = sizeText.split(' ')[0];
-          const quantity = parseInt(quantityInput.value);
-
-          if (quantity <= 0) {
-            showCuteAlert(
-              '數量錯誤！',
-              '數量必須大於 0 哦～',
-              '❌'
-            );
-            return;
-          }
-
-          // 處理甜度選項
-          let sugar = "全糖";
-          if (currentBeverage.fixedOptions?.sugar) {
-            sugar = currentBeverage.fixedOptions.sugar;
-          } else if (currentBeverage.noSugarOptions) {
-            sugar = ""; // 不顯示甜度
-          } else {
-            const selectedSugarBtn = document.querySelector('#sugar-options .option-btn.selected');
-            if (selectedSugarBtn) {
-              sugar = selectedSugarBtn.dataset.value;
-            }
-          }
-
-          // 處理冰塊選項
-          let ice = "正冰";
-          if (currentBeverage.fixedOptions?.ice) {
-            ice = currentBeverage.fixedOptions.ice;
-          } else {
-            const selectedIceBtn = document.querySelector('#ice-options .option-btn.selected');
-            if (selectedIceBtn) {
-              ice = selectedIceBtn.dataset.value;
-            }
-          }
-
-          // 處理茶品選項
-          let selectedTea = '';
-          if (currentBeverage.teaOptions) {
-            const selectedTeaBtn = document.querySelector('#tea-options .option-btn.selected');
-            if (selectedTeaBtn) {
-              selectedTea = selectedTeaBtn.dataset.teaValue;
-            }
-          }
-
-          // 處理加料選項
-          const selectedToppings = [];
-          let toppingsPrice = 0;
-          if (currentBeverage.canAddToppings) {
-            document.querySelectorAll('#toppings-options .option-btn.selected').forEach(btn => {
-              const toppingName = btn.dataset.toppingName;
-              const toppingPrice = parseInt(btn.dataset.toppingPrice);
-              selectedToppings.push(toppingName);
-              toppingsPrice += toppingPrice;
-            });
-          }
-
-          const basePrice = currentBeverage.prices[size];
-          const totalPrice = (basePrice + toppingsPrice) * quantity;
-
-          const orderItem = {
-            beverage: currentBeverage,
-            size: size,
-            sugar: sugar,
-            ice: ice,
-            tea: selectedTea,
-            toppings: selectedToppings,
-            quantity: quantity,
-            price: totalPrice
-          };
-
-          currentOrder.push(orderItem);
-          updateOrderDisplay();
-          updateOrderPreview();
-          modal.style.display = 'none';
-        };
-
-        // 取消訂購
-        cancelOrderBtn.onclick = () => {
-          modal.style.display = 'none';
-        };
-
         // 更新訂單顯示
         function updateOrderDisplay() {
           if (currentOrder.length === 0) {
@@ -2935,16 +2859,15 @@
           }
 
           // 更新總金額
-          const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+          const total = currentOrder.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
           totalAmountEl.textContent = total;
 
           // 更新免運提醒（如果外送地址已填寫）
           const deliveryAddress = document.getElementById('delivery-address');
           if (deliveryAddress && deliveryAddress.value.trim().length > 5) {
-            const distanceResult = document.getElementById('distance-result');
-            if (distanceResult && distanceResult.style.display !== 'none') {
-              // 重新計算距離以獲取最新的外送級別
-              useBackupDistanceCalculation(deliveryAddress.value.trim());
+            const deliveryLevel = getCurrentDeliveryLevel();
+            if (deliveryLevel) {
+              updateShippingReminder(deliveryLevel);
             }
           }
         }
@@ -3000,17 +2923,7 @@
             currentOrder.splice(index, 1);
           } else {
             // 重新計算價格
-            const basePrice = item.beverage.prices[item.size];
-            let toppingsPrice = 0;
-            if (item.toppings) {
-              item.toppings.forEach(toppingName => {
-                const topping = toppings.find(t => t.name === toppingName);
-                if (topping) {
-                  toppingsPrice += topping.price;
-                }
-              });
-            }
-            item.price = (basePrice + toppingsPrice) * item.quantity;
+            item.price = calculateOrderItemPrice(item);
           }
 
           updateOrderDisplay();
@@ -3032,7 +2945,12 @@
             return;
           }
 
-          const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+          currentOrder.forEach(item => {
+            if (!Number.isFinite(Number(item.price)) || Number(item.price) <= 0) {
+              item.price = calculateOrderItemPrice(item);
+            }
+          });
+          const total = currentOrder.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
           const orderTime = new Date().toLocaleString('zh-TW');
 
           // 組合時間和單位顯示
@@ -3148,6 +3066,11 @@
           const phone = customerPhone.value.trim();
           const address = deliveryAddress.value.trim();
           const notes = `希望送達時間：${deliveryTime.value}${deliveryTimeUnit.value}`;
+          currentOrder.forEach(item => {
+            if (!Number.isFinite(Number(item.price)) || Number(item.price) <= 0) {
+              item.price = calculateOrderItemPrice(item);
+            }
+          });
           const subtotal = currentOrder.reduce((sum, item) => sum + Number(item.price || 0), 0);
           const deliveryLevel = getCurrentDeliveryLevel();
           const deliveryFee = deliveryLevel && subtotal < deliveryLevel.freeShipping ? deliveryLevel.fee : 0;
@@ -3668,17 +3591,68 @@
 
         // 距離計算功能
         const storeAddress = "四維路90號, 楊梅區, 桃園市, 台灣";
+        const storeCoordinates = { lat: 24.913547308670775, lng: 121.18078338776571 };
         let distanceCalculationTimeout;
         let googleMapsLoaded = false;
+        let latestDistanceRequestId = 0;
+        let latestDistanceResult = null;
+
+        function isLatestDistanceRequest(customerAddress, requestId) {
+          const deliveryAddressInput = document.getElementById('delivery-address');
+          if (!deliveryAddressInput) return false;
+          const currentAddress = deliveryAddressInput.value.trim();
+          return requestId === latestDistanceRequestId && currentAddress === customerAddress.trim();
+        }
+
+        async function calculateDistanceViaBackend(customerAddress) {
+          try {
+            const response = await fetch(`${BACKEND_API_URL}/distance`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customerAddress,
+                storeAddress,
+                apiKey: SERPAPI_KEY
+              })
+            });
+            if (!response.ok) return null;
+            const result = await response.json();
+            if (!result.success || !Number.isFinite(Number(result.distanceKm))) {
+              return null;
+            }
+            return {
+              distanceKm: Number(result.distanceKm),
+              durationText: String(result.durationText || '')
+            };
+          } catch (error) {
+            console.warn('後端距離代理不可用:', error.message);
+            return null;
+          }
+        }
 
         // 使用 SerpApi Google Maps Directions API 計算距離
-        async function calculateDistanceWithGoogleMaps(customerAddress) {
+        async function calculateDistanceWithGoogleMaps(customerAddress, requestId = 0) {
           console.log('開始 SerpApi 距離計算:', customerAddress);
 
           try {
+            // 優先走後端代理，避免前端 CORS 導致無法取得 Google 精算
+            const backendDistance = await calculateDistanceViaBackend(customerAddress);
+            if (backendDistance && Number.isFinite(backendDistance.distanceKm)) {
+              if (!isLatestDistanceRequest(customerAddress, requestId)) {
+                return;
+              }
+              latestDistanceResult = {
+                address: customerAddress.trim(),
+                distanceKm: backendDistance.distanceKm,
+                isGoogleMaps: true
+              };
+              displayDistanceResultWithDuration(backendDistance.distanceKm, backendDistance.durationText, true);
+              return;
+            }
+
             if (!SERPAPI_KEY) {
               console.warn('請先設定 SerpApi API Key，使用備用計算方法');
-              return useBackupDistanceCalculation(customerAddress);
+              return useBackupDistanceCalculation(customerAddress, requestId);
             }
 
             console.log('正在使用 SerpApi 計算距離...');
@@ -3736,6 +3710,14 @@
                 console.log('SerpApi 計算時間:', durationText);
 
                 // 顯示結果（包含時間信息）
+                if (!isLatestDistanceRequest(customerAddress, requestId)) {
+                  return;
+                }
+                latestDistanceResult = {
+                  address: customerAddress.trim(),
+                  distanceKm: distanceKm,
+                  isGoogleMaps: true
+                };
                 displayDistanceResultWithDuration(distanceKm, durationText, true);
                 return;
               }
@@ -3743,12 +3725,46 @@
 
             // 如果沒有路徑信息，嘗試使用 Google Maps 搜索
             console.log('嘗試使用 Google Maps 搜索...');
-            await searchWithGoogleMaps(customerAddress);
+            const searchResult = await searchWithGoogleMaps(customerAddress);
+            if (searchResult && Number.isFinite(searchResult.distanceKm)) {
+              if (!isLatestDistanceRequest(customerAddress, requestId)) {
+                return;
+              }
+              latestDistanceResult = {
+                address: customerAddress.trim(),
+                distanceKm: searchResult.distanceKm,
+                isGoogleMaps: true
+              };
+              displayDistanceResultWithDuration(searchResult.distanceKm, searchResult.durationText || '', true);
+              return;
+            }
+
+            // Google 搜索無法取得有效座標時，才退回系統估算
+            useBackupDistanceCalculation(customerAddress, requestId);
 
           } catch (error) {
             console.warn('SerpApi 距離計算失敗:', error);
-            // 如果 SerpApi 計算失敗，使用備用方法
-            useBackupDistanceCalculation(customerAddress);
+            // Directions 失敗時，先嘗試 Google Maps 搜索座標，再退回備援估算
+            try {
+              const searchResult = await searchWithGoogleMaps(customerAddress);
+              if (searchResult && Number.isFinite(searchResult.distanceKm)) {
+                if (!isLatestDistanceRequest(customerAddress, requestId)) {
+                  return;
+                }
+                latestDistanceResult = {
+                  address: customerAddress.trim(),
+                  distanceKm: searchResult.distanceKm,
+                  isGoogleMaps: true
+                };
+                displayDistanceResultWithDuration(searchResult.distanceKm, searchResult.durationText || '', true);
+                return;
+              }
+            } catch (searchError) {
+              console.warn('Google Maps 搜索備援失敗:', searchError);
+            }
+
+            // Google 兩種方式都失敗時，才使用系統估算
+            useBackupDistanceCalculation(customerAddress, requestId);
           }
         }
 
@@ -3775,11 +3791,21 @@
             if (data.local_results && data.local_results.length > 0) {
               const result = data.local_results[0];
               console.log('Google Maps 搜索結果:', result);
-
-              // 這裡可以進一步處理搜索結果
-              // 例如獲取座標並計算距離
+              const coordinates = result.gps_coordinates || result.coordinates || null;
+              const lat = Number(coordinates?.latitude);
+              const lng = Number(coordinates?.longitude);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                const distanceKm = calculateHaversineDistance(
+                  storeCoordinates.lat,
+                  storeCoordinates.lng,
+                  lat,
+                  lng
+                );
+                return { distanceKm, durationText: 'Google 搜尋座標估算' };
+              }
             }
 
+            return null;
           } catch (error) {
             console.warn('Google Maps 搜索失敗:', error);
             throw error;
@@ -3981,18 +4007,39 @@
             hideDistanceResult();
 
             if (address.length > 5) {
+              const requestId = ++latestDistanceRequestId;
               // 延遲500ms後計算，避免頻繁調用
               distanceCalculationTimeout = setTimeout(() => {
                 // 使用 SerpApi Google Maps Directions API 計算距離
-                calculateDistanceWithGoogleMaps(address);
+                calculateDistanceWithGoogleMaps(address, requestId);
               }, 500);
+            } else {
+              latestDistanceResult = null;
             }
           });
+
+          // 頁面初始若已有地址，直接進行一次 Google 距離計算
+          const initialAddress = deliveryAddressInput.value.trim();
+          if (initialAddress.length > 5) {
+            const requestId = ++latestDistanceRequestId;
+            calculateDistanceWithGoogleMaps(initialAddress, requestId);
+          }
         }
 
         // 備用距離計算方法（包含特定路段）
-        function useBackupDistanceCalculation(customerAddress) {
+        function useBackupDistanceCalculation(customerAddress, requestId = 0) {
           console.log('使用備用距離計算方法:', customerAddress);
+
+          if (!isLatestDistanceRequest(customerAddress, requestId)) {
+            return;
+          }
+
+          const normalizedAddress = customerAddress.trim();
+          if (latestDistanceResult &&
+              latestDistanceResult.address === normalizedAddress &&
+              latestDistanceResult.isGoogleMaps) {
+            return;
+          }
 
           // 楊梅區特定路段距離設定
           const yangmeiSpecificRoutes = {
@@ -4064,6 +4111,11 @@
           console.log(`備用計算距離: ${estimatedDistance}公里 (匹配路段: ${matchedRoute || '無匹配'})`);
 
           // 使用統一的顯示函數
+          latestDistanceResult = {
+            address: normalizedAddress,
+            distanceKm: estimatedDistance,
+            isGoogleMaps: false
+          };
           displayDistanceResult(estimatedDistance, false);
         }
 
@@ -4139,6 +4191,10 @@
           }
 
           const address = deliveryAddress.value.trim();
+
+          if (latestDistanceResult && latestDistanceResult.address === address) {
+            return getDeliveryLevel(latestDistanceResult.distanceKm);
+          }
 
           // 楊梅區特定路段距離設定
           const yangmeiSpecificRoutes = {

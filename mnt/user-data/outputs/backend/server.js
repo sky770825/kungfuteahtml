@@ -1,5 +1,6 @@
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const path = require('path');
 const { URL } = require('url');
 
@@ -138,6 +139,39 @@ function parseBody(req) {
   });
 }
 
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, response => {
+      let raw = '';
+      response.on('data', chunk => {
+        raw += chunk;
+      });
+      response.on('end', () => {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new Error(`HTTP ${response.statusCode}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(raw));
+        } catch (error) {
+          reject(new Error('Invalid JSON from upstream'));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 function calcStats(orders) {
   const today = new Date();
   const totalOrders = orders.length;
@@ -272,6 +306,113 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 201, { success: true, order });
     } catch (error) {
       sendJson(res, 400, { success: false, message: error.message });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/distance') {
+    try {
+      const body = await parseBody(req);
+      const customerAddress = String(body.customerAddress || '').trim();
+      const storeAddress = String(body.storeAddress || '').trim();
+      const apiKey = String(process.env.KUNGFU_TEA_SERPAPI_KEY || body.apiKey || '').trim();
+      const normalizedCustomerAddress = customerAddress.replace(/\s+/g, '');
+
+      if (!customerAddress || !storeAddress) {
+        sendJson(res, 400, { success: false, message: 'customerAddress 與 storeAddress 為必填' });
+        return;
+      }
+      if (normalizedCustomerAddress.includes('四維路90號')) {
+        sendJson(res, 200, {
+          success: true,
+          distanceKm: 0.5,
+          durationText: '約 2-5 分',
+          source: 'same_address_override'
+        });
+        return;
+      }
+      if (!apiKey) {
+        sendJson(res, 400, { success: false, message: '缺少 SerpApi 金鑰（KUNGFU_TEA_SERPAPI_KEY）' });
+        return;
+      }
+
+      const params = new URLSearchParams({
+        engine: 'google_maps_directions',
+        start_addr: storeAddress,
+        end_addr: customerAddress,
+        api_key: apiKey,
+        hl: 'zh-tw',
+        gl: 'tw'
+      });
+
+      const data = await fetchJson(`https://serpapi.com/search.json?${params.toString()}`);
+      const direction = Array.isArray(data.directions) ? data.directions[0] : null;
+      if (!direction) {
+        // Directions 有時對同地點/短地址不回傳，改用 Google Maps 搜索座標估算
+        const searchParams = new URLSearchParams({
+          engine: 'google_maps',
+          q: customerAddress,
+          ll: '@24.913547308670775,121.18078338776571,14z',
+          api_key: apiKey,
+          hl: 'zh-tw',
+          gl: 'tw'
+        });
+        const searchData = await fetchJson(`https://serpapi.com/search.json?${searchParams.toString()}`);
+        const firstResult = Array.isArray(searchData.local_results) ? searchData.local_results[0] : null;
+        const coordinates = firstResult ? (firstResult.gps_coordinates || firstResult.coordinates) : null;
+        const lat = Number(coordinates && coordinates.latitude);
+        const lng = Number(coordinates && coordinates.longitude);
+
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          const distanceKm = calculateHaversineDistance(24.913547308670775, 121.18078338776571, lat, lng);
+          if (distanceKm > 40) {
+            sendJson(res, 200, { success: false, message: '搜索座標距離異常，改用前端備援估算' });
+            return;
+          }
+          sendJson(res, 200, {
+            success: true,
+            distanceKm,
+            durationText: 'Google 搜尋座標估算',
+            source: 'google_maps_search'
+          });
+          return;
+        }
+
+        sendJson(res, 200, { success: false, message: 'Directions/搜索皆無有效座標' });
+        return;
+      }
+
+      let distanceKm = null;
+      if (typeof direction.distance === 'number') {
+        distanceKm = direction.distance / 1000;
+      } else if (typeof direction.formatted_distance === 'string') {
+        const match = direction.formatted_distance.match(/(\d+\.?\d*)/);
+        if (match) distanceKm = parseFloat(match[1]);
+      } else if (typeof direction.distance === 'string') {
+        const match = direction.distance.match(/(\d+\.?\d*)/);
+        if (match) distanceKm = parseFloat(match[1]);
+      }
+
+      let durationText = '';
+      if (typeof direction.formatted_duration === 'string') {
+        durationText = direction.formatted_duration;
+      } else if (typeof direction.duration === 'number') {
+        durationText = `${Math.round(direction.duration / 60)} 分`;
+      }
+
+      if (!Number.isFinite(distanceKm)) {
+        sendJson(res, 200, { success: false, message: '無法解析距離' });
+        return;
+      }
+
+      sendJson(res, 200, {
+        success: true,
+        distanceKm,
+        durationText,
+        source: 'google_maps_directions'
+      });
+    } catch (error) {
+      sendJson(res, 500, { success: false, message: error.message });
     }
     return;
   }

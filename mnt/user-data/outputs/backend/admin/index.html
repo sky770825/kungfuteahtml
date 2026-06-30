@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>功夫茶後台管理系統</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23667eea'/%3E%3Cpath d='M20 18h24l-4 32H24z' fill='%23fff'/%3E%3Cpath d='M24 26h16M24 34h16M24 42h10' stroke='%23667eea' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
   <style>
     * {
       margin: 0;
@@ -703,9 +704,53 @@
     let currentFilter = { status: 'all', date: '' };
     /** 後端是否可用（連線成功過） */
     let backendAvailable = false;
+    const ADMIN_TOKEN_STORAGE_KEY = 'kungfuTeaAdminToken';
+    let adminToken = (window.KUNGFU_TEA_ADMIN_TOKEN || localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || '').trim();
     /** SSE 重連次數，避免後端未開時無限重試 */
     let sseReconnectAttempts = 0;
     const SSE_MAX_RECONNECT = 3;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getAdminHeaders(extra = {}) {
+      const headers = { ...extra };
+      if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+      return headers;
+    }
+
+    function promptAdminToken(force = false) {
+      if (!force && adminToken) return true;
+      const token = prompt('請輸入後台管理 Token。啟動後端時請設定 KUNGFU_TEA_ADMIN_TOKEN。');
+      if (!token || !token.trim()) return false;
+      adminToken = token.trim();
+      localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, adminToken);
+      return true;
+    }
+
+    function clearAdminToken() {
+      adminToken = '';
+      localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    }
+
+    async function apiFetch(path, options = {}) {
+      const response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers: getAdminHeaders(options.headers || {})
+      });
+
+      if (response.status === 401) {
+        clearAdminToken();
+        showNotification('後台 Token 無效，請重新輸入', 'error');
+      }
+      return response;
+    }
 
     async function resolveApiUrl() {
       const candidates = [];
@@ -714,10 +759,18 @@
       if (override) {
         candidates.push(override.replace(/\/$/, ''));
       }
+      const isLocalStaticPreview = ['localhost', '127.0.0.1', '::1'].includes(location.hostname) &&
+        location.port &&
+        location.port !== '3000';
+      if (isLocalStaticPreview) {
+        candidates.push('http://localhost:3000/api');
+      }
       if (location.protocol === 'http:' || location.protocol === 'https:') {
         candidates.push(`${location.origin}/api`);
       }
-      candidates.push('http://localhost:3000/api');
+      if (!isLocalStaticPreview) {
+        candidates.push('http://localhost:3000/api');
+      }
 
       const uniqueCandidates = [...new Set(candidates)];
       for (const base of uniqueCandidates) {
@@ -726,17 +779,18 @@
           if (!res.ok) continue;
           const data = await res.json();
           if (data && data.success) {
-            return { url: base, ok: true };
+            return { url: base, ok: true, adminAuthConfigured: Boolean(data.adminAuthConfigured) };
           }
         } catch (error) {
           // Try next candidate.
         }
       }
 
-      return { url: uniqueCandidates[uniqueCandidates.length - 1] || 'http://localhost:3000/api', ok: false };
+      return { url: uniqueCandidates[uniqueCandidates.length - 1] || 'http://localhost:3000/api', ok: false, adminAuthConfigured: false };
     }
 
-    function showBackendUnavailableBanner() {
+    function showBackendUnavailableBanner(message) {
+      document.getElementById('backend-unavailable-banner')?.remove();
       const banner = document.createElement('div');
       banner.id = 'backend-unavailable-banner';
       banner.style.cssText = `
@@ -745,7 +799,7 @@
         padding: 12px 24px; text-align: center; font-weight: 600;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       `;
-      banner.innerHTML = '⚠️ 無法連線後端服務（' + API_URL.replace(/\/api\/?$/, '') + '）。請先啟動後端（例如在專案目錄執行 <code>npm run server</code> 或啟動對應服務）。';
+      banner.textContent = message || `⚠️ 無法連線後端服務（${API_URL.replace(/\/api\/?$/, '')}）。請先在專案目錄執行 npm run backend。`;
       document.body.insertBefore(banner, document.body.firstChild);
       document.querySelector('.main-content').style.marginTop = '52px';
     }
@@ -759,6 +813,20 @@
       if (!backendAvailable) {
         console.info('提示：若尚未啟動後端，上方出現的 404 或 ERR_CONNECTION_REFUSED 為正常現象，可忽略。');
         showBackendUnavailableBanner();
+        allOrders = [];
+        renderOrders([]);
+        return;
+      }
+
+      if (!result.adminAuthConfigured) {
+        showBackendUnavailableBanner('⚠️ 後台尚未設定 KUNGFU_TEA_ADMIN_TOKEN。請用 KUNGFU_TEA_ADMIN_TOKEN=你的密碼 npm run backend 啟動後端。');
+        allOrders = [];
+        renderOrders([]);
+        return;
+      }
+
+      if (!promptAdminToken()) {
+        showBackendUnavailableBanner('⚠️ 後台需要管理 Token。請設定 KUNGFU_TEA_ADMIN_TOKEN 啟動後端，重新整理後輸入 Token。');
         allOrders = [];
         renderOrders([]);
         return;
@@ -813,7 +881,7 @@
     // 載入統計資料
     function loadStats() {
       if (!backendAvailable) return;
-      fetch(`${API_URL}/stats`)
+      apiFetch('/stats')
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -829,7 +897,7 @@
 
     // 載入訂單
     function loadOrders() {
-      fetch(`${API_URL}/orders`)
+      apiFetch('/orders')
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -838,6 +906,8 @@
             document.querySelector('.main-content')?.style && (document.querySelector('.main-content').style.marginTop = '');
             allOrders = data.orders;
             renderOrders(allOrders);
+          } else {
+            showNotification(data.message || '載入訂單失敗', 'error');
           }
         })
         .catch(err => {
@@ -884,39 +954,43 @@
 
     // 建立訂單行
     function createOrderRow(order, showMethod) {
-      const statusClass = `status-${order.status}`;
+      const safeStatus = ['pending', 'processing', 'completed', 'cancelled'].includes(order.status) ? order.status : 'pending';
+      const statusClass = `status-${safeStatus}`;
       const statusText = {
         'pending': '待處理',
         'processing': '處理中',
         'completed': '已完成',
         'cancelled': '已取消'
-      }[order.status];
+      }[safeStatus];
 
-      const method = order.customer.method === 'delivery' ? '外送' : '自取';
+      const customer = order.customer || {};
+      const method = customer.method === 'delivery' ? '外送' : '自取';
       const time = new Date(order.createdAt).toLocaleString('zh-TW');
+      const orderId = Number(order.id);
+      const orderTotal = Number(order.total || 0);
 
       const methodCell = showMethod ? `<td>${method}</td>` : '';
 
       return `
         <tr>
-          <td><strong>#${order.id}</strong></td>
-          <td>${order.customer.name}</td>
-          <td>${order.customer.phone}</td>
+          <td><strong>#${orderId}</strong></td>
+          <td>${escapeHtml(customer.name)}</td>
+          <td>${escapeHtml(customer.phone)}</td>
           ${methodCell}
-          <td><strong>$${order.total}</strong></td>
+          <td><strong>$${orderTotal}</strong></td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-          <td>${time}</td>
+          <td>${escapeHtml(time)}</td>
           <td>
-            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="viewOrder(${order.id})">
+            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="viewOrder(${orderId})">
               查看
             </button>
-            ${order.status === 'pending' ? `
-              <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;" onclick="updateStatus(${order.id}, 'processing')">
+            ${safeStatus === 'pending' ? `
+              <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;" onclick="updateStatus(${orderId}, 'processing')">
                 接單
               </button>
             ` : ''}
-            ${order.status === 'processing' ? `
-              <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;" onclick="updateStatus(${order.id}, 'completed')">
+            ${safeStatus === 'processing' ? `
+              <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;" onclick="updateStatus(${orderId}, 'completed')">
                 完成
               </button>
             ` : ''}
@@ -930,33 +1004,47 @@
       const order = allOrders.find(o => o.id === orderId);
       if (!order) return;
 
+      const safeStatus = ['pending', 'processing', 'completed', 'cancelled'].includes(order.status) ? order.status : 'pending';
+      const customer = order.customer || {};
+      const safeOrderId = Number(order.id);
       const statusText = {
         'pending': '待處理',
         'processing': '處理中',
         'completed': '已完成',
         'cancelled': '已取消'
-      }[order.status];
+      }[safeStatus];
 
-      const method = order.customer.method === 'delivery' ? '外送' : '自取';
+      const method = customer.method === 'delivery' ? '外送' : '自取';
+      const items = Array.isArray(order.items) ? order.items : [];
+      const orderTotal = Number(order.total || 0);
+      const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+      const savedSubtotal = Number(order.subtotal);
+      const subtotal = Number.isFinite(savedSubtotal) ? savedSubtotal : itemsSubtotal;
+      const savedDeliveryFee = Number(order.deliveryFee);
+      const inferredDeliveryFee = Math.max(0, orderTotal - subtotal);
+      const deliveryFee = Number.isFinite(savedDeliveryFee) && savedDeliveryFee > 0
+        ? savedDeliveryFee
+        : inferredDeliveryFee;
+      const orderTime = new Date(order.createdAt).toLocaleString('zh-TW');
       
       let detailsHTML = `
         <div class="order-detail-item">
           <div class="order-detail-label">訂單編號</div>
-          <div class="order-detail-value"><strong>#${order.id}</strong></div>
+          <div class="order-detail-value"><strong>#${safeOrderId}</strong></div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">訂單狀態</div>
           <div class="order-detail-value">
-            <span class="status-badge status-${order.status}">${statusText}</span>
+            <span class="status-badge status-${safeStatus}">${statusText}</span>
           </div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">客戶姓名</div>
-          <div class="order-detail-value">${order.customer.name}</div>
+          <div class="order-detail-value">${escapeHtml(customer.name)}</div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">聯絡電話</div>
-          <div class="order-detail-value">${order.customer.phone}</div>
+          <div class="order-detail-value">${escapeHtml(customer.phone)}</div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">取餐方式</div>
@@ -964,20 +1052,20 @@
         </div>
       `;
 
-      if (order.customer.address) {
+      if (customer.address) {
         detailsHTML += `
           <div class="order-detail-item">
             <div class="order-detail-label">外送地址</div>
-            <div class="order-detail-value">${order.customer.address}</div>
+            <div class="order-detail-value">${escapeHtml(customer.address)}</div>
           </div>
         `;
       }
 
-      if (order.customer.notes) {
+      if (customer.notes) {
         detailsHTML += `
           <div class="order-detail-item">
             <div class="order-detail-label">備註</div>
-            <div class="order-detail-value">${order.customer.notes}</div>
+            <div class="order-detail-value">${escapeHtml(customer.notes)}</div>
           </div>
         `;
       }
@@ -986,25 +1074,35 @@
         <div class="order-detail-item">
           <div class="order-detail-label">訂單項目</div>
           <div class="items-list">
-            ${order.items.map(item => `
+            ${items.map(item => `
               <div class="item-row">
                 <div>
-                  <strong>${item.name}</strong> (${item.size})
+                  <strong>${escapeHtml(item.name)}</strong>${item.size ? ` (${escapeHtml(item.size)})` : ''}
                   <br>
-                  <small>$${item.price} x ${item.quantity}</small>
+                  <small>$${Number(item.price || 0)} x ${Number(item.quantity || 0)}</small>
                 </div>
-                <div><strong>$${item.total}</strong></div>
+                <div><strong>$${Number(item.total || 0)}</strong></div>
               </div>
             `).join('')}
+            ${deliveryFee > 0 ? `
+              <div class="item-row">
+                <div>
+                  <strong>外送運費</strong>
+                  <br>
+                  <small>依外送距離與免運條件計算</small>
+                </div>
+                <div><strong>$${deliveryFee}</strong></div>
+              </div>
+            ` : ''}
           </div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">訂單總金額</div>
-          <div class="order-detail-value"><strong style="font-size: 1.3rem; color: var(--primary);">$${order.total}</strong></div>
+          <div class="order-detail-value"><strong style="font-size: 1.3rem; color: var(--primary);">$${orderTotal}</strong></div>
         </div>
         <div class="order-detail-item">
           <div class="order-detail-label">訂單時間</div>
-          <div class="order-detail-value">${new Date(order.createdAt).toLocaleString('zh-TW')}</div>
+          <div class="order-detail-value">${escapeHtml(orderTime)}</div>
         </div>
       `;
 
@@ -1013,18 +1111,18 @@
         <div style="margin-top: 20px; display: flex; gap: 10px;">
       `;
 
-      if (order.status === 'pending') {
+      if (safeStatus === 'pending') {
         detailsHTML += `
-          <button class="btn btn-success" style="flex: 1;" onclick="updateStatus(${order.id}, 'processing'); closeOrderModal();">
+          <button class="btn btn-success" style="flex: 1;" onclick="updateStatus(${safeOrderId}, 'processing'); closeOrderModal();">
             接單
           </button>
-          <button class="btn btn-danger" style="flex: 1;" onclick="updateStatus(${order.id}, 'cancelled'); closeOrderModal();">
+          <button class="btn btn-danger" style="flex: 1;" onclick="updateStatus(${safeOrderId}, 'cancelled'); closeOrderModal();">
             取消訂單
           </button>
         `;
-      } else if (order.status === 'processing') {
+      } else if (safeStatus === 'processing') {
         detailsHTML += `
-          <button class="btn btn-success" style="flex: 1;" onclick="updateStatus(${order.id}, 'completed'); closeOrderModal();">
+          <button class="btn btn-success" style="flex: 1;" onclick="updateStatus(${safeOrderId}, 'completed'); closeOrderModal();">
             完成訂單
           </button>
         `;
@@ -1077,7 +1175,6 @@
         <td><input type="text" class="new-item-name" placeholder="品名" style="width: 100%; padding: 6px 8px; border: 1px solid #dee2e6; border-radius: 6px;"></td>
         <td>
           <select class="new-item-size" style="padding: 6px 8px; border: 1px solid #dee2e6; border-radius: 6px;">
-            <option value="M">M</option>
             <option value="L" selected>L</option>
             <option value="瓶">瓶</option>
           </select>
@@ -1145,7 +1242,7 @@
       const btn = document.getElementById('btn-submit-new-order');
       btn.disabled = true;
       btn.textContent = '送出中...';
-      fetch(`${API_URL}/orders`, {
+      apiFetch('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1172,7 +1269,7 @@
 
     // 更新訂單狀態
     function updateStatus(orderId, status) {
-      fetch(`${API_URL}/orders/${orderId}/status`, {
+      apiFetch(`/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -1225,7 +1322,7 @@
 
     // 載入會員
     function refreshMembers() {
-      fetch(`${API_URL}/members`)
+      apiFetch('/members')
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -1252,13 +1349,13 @@
 
       tbody.innerHTML = members.map(member => `
         <tr>
-          <td><strong>#${member.id}</strong></td>
-          <td>${member.name}</td>
-          <td>${member.phone}</td>
-          <td>${member.email || '-'}</td>
-          <td>${new Date(member.createdAt).toLocaleDateString('zh-TW')}</td>
+          <td><strong>#${Number(member.id)}</strong></td>
+          <td>${escapeHtml(member.name)}</td>
+          <td>${escapeHtml(member.phone)}</td>
+          <td>${escapeHtml(member.email || '-')}</td>
+          <td>${escapeHtml(new Date(member.createdAt).toLocaleDateString('zh-TW'))}</td>
           <td>
-            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="viewMemberOrders(${member.id})">
+            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="viewMemberOrders(${Number(member.id)})">
               訂單記錄
             </button>
           </td>
@@ -1268,7 +1365,7 @@
 
     // 查看會員訂單
     function viewMemberOrders(memberId) {
-      fetch(`${API_URL}/members/${memberId}/orders`)
+      apiFetch(`/members/${memberId}/orders`)
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -1282,7 +1379,7 @@
     function connectEventSource() {
       if (!backendAvailable) return;
 
-      const eventSource = new EventSource(`${API_URL}/events`);
+      const eventSource = new EventSource(`${API_URL}/events?adminToken=${encodeURIComponent(adminToken)}`);
 
       eventSource.onmessage = function(event) {
         const data = JSON.parse(event.data);

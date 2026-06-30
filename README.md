@@ -1,4 +1,4 @@
-# 功夫茶 KUNG FU TEA - 線上點餐系統 v2.0
+# 功夫茶 KUNG FU TEA - 線上點餐系統 v2.1.0
 
 ## 📋 專案簡介
 
@@ -31,6 +31,17 @@ npm run dev
 npm start
 ```
 
+### 啟動本機後台
+```bash
+KUNGFU_TEA_ADMIN_TOKEN=請換成自己的密碼 npm run backend
+```
+
+前端預覽預設使用 5501 port，後台 API 預設使用 3000 port。正式上線時請另外設定：
+
+- `KUNGFU_TEA_ADMIN_TOKEN`: 後台管理 Token
+- `KUNGFU_TEA_SERPAPI_KEY`: 後端距離精算使用的 SerpApi 金鑰
+- `KUNGFU_TEA_ALLOWED_ORIGINS`: 允許呼叫後端 API 的前端網址，多個網址用逗號分隔
+
 ## 📁 專案結構
 
 ```
@@ -39,7 +50,7 @@ npm start
 ├── css/
 │   └── style.css       # 樣式檔案
 ├── js/
-│   └── script.js       # JavaScript 功能
+│   └── script.js       # 舊版備份，主頁未載入
 ├── assets/             # 靜態資源
 ├── images/             # 圖片資源
 ├── package.json        # 專案配置

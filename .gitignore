@@ -3,6 +3,9 @@ backups/
 *_backup_*.html
 index_backup_*.html
 
+# 本機素材來源資料夾（含加盟主公告與前後場公式，不公開上傳）
+功夫茶/
+
 # 臨時文件
 *.tmp
 *.temp

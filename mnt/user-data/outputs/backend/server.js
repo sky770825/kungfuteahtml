@@ -4,10 +4,37 @@ const https = require('https');
 const path = require('path');
 const { URL } = require('url');
 
+function loadLocalEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const raw = fs.readFileSync(filePath, 'utf8');
+  raw.split(/\r?\n/).forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match) return;
+    const key = match[1];
+    if (process.env[key] !== undefined) return;
+    let value = match[2].trim();
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  });
+}
+
+loadLocalEnvFile(path.join(process.cwd(), '.env.local'));
+loadLocalEnvFile(path.join(__dirname, '.env.local'));
+
 const PORT = Number(process.env.PORT || 3000);
 const DATA_FILE = path.join(__dirname, 'data.json');
 const ADMIN_FILE = path.join(__dirname, 'admin', 'index.html');
 const VALID_STATUSES = new Set(['pending', 'processing', 'completed', 'cancelled']);
+const ADMIN_TOKEN = String(process.env.KUNGFU_TEA_ADMIN_TOKEN || '').trim();
+const ALLOWED_ORIGINS = String(process.env.KUNGFU_TEA_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
 
 function nowIso() {
   return new Date().toISOString();
@@ -95,20 +122,72 @@ function saveState(state) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf8');
 }
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, {
+function isLocalhostOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
+function getCorsOrigin(req) {
+  const origin = String(req.headers.origin || '').replace(/\/$/, '');
+  if (!origin) return '*';
+  if (ALLOWED_ORIGINS.length > 0) {
+    return ALLOWED_ORIGINS.includes(origin) ? origin : '';
+  }
+  return isLocalhostOrigin(origin) ? origin : '';
+}
+
+function getCorsHeaders(req) {
+  const corsOrigin = getCorsOrigin(req);
+  const headers = {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  });
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    Vary: 'Origin'
+  };
+  if (corsOrigin) {
+    headers['Access-Control-Allow-Origin'] = corsOrigin;
+  }
+  return headers;
+}
+
+function sendJson(req, res, statusCode, payload) {
+  res.writeHead(statusCode, getCorsHeaders(req));
   res.end(JSON.stringify(payload));
+}
+
+function getRequestToken(req, url) {
+  const auth = String(req.headers.authorization || '').trim();
+  const bearer = auth.match(/^Bearer\s+(.+)$/i);
+  if (bearer) return bearer[1].trim();
+  return String(url.searchParams.get('adminToken') || url.searchParams.get('token') || '').trim();
+}
+
+function requireAdminAuth(req, res, url) {
+  if (!ADMIN_TOKEN) {
+    sendJson(req, res, 503, {
+      success: false,
+      message: '後台尚未設定 KUNGFU_TEA_ADMIN_TOKEN，請先以環境變數啟動後端'
+    });
+    return false;
+  }
+
+  if (getRequestToken(req, url) !== ADMIN_TOKEN) {
+    sendJson(req, res, 401, { success: false, message: '需要有效的後台管理 Token' });
+    return false;
+  }
+
+  return true;
 }
 
 function sendHtmlFile(res, filePath) {
   fs.readFile(filePath, 'utf8', (error, content) => {
     if (error) {
-      sendJson(res, 500, { success: false, message: '讀取頁面失敗' });
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('讀取頁面失敗');
       return;
     }
     res.writeHead(200, {
@@ -211,11 +290,21 @@ function normalizeOrderPayload(payload) {
     };
   });
 
-  const calculatedTotal = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
-  const total = Number(payload.total || calculatedTotal);
-  const status = VALID_STATUSES.has(payload.status) ? payload.status : 'pending';
+  const calculatedSubtotal = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const payloadSubtotal = Number(payload.subtotal);
+  const subtotal = Number.isFinite(payloadSubtotal) ? payloadSubtotal : calculatedSubtotal;
+  const payloadDeliveryFee = Number(payload.deliveryFee);
+  const payloadTotal = Number(payload.total);
+  const inferredDeliveryFee = Number.isFinite(payloadTotal)
+    ? Math.max(0, payloadTotal - subtotal)
+    : 0;
+  const deliveryFee = Number.isFinite(payloadDeliveryFee)
+    ? Math.max(0, payloadDeliveryFee)
+    : inferredDeliveryFee;
+  const total = Number.isFinite(payloadTotal) ? payloadTotal : subtotal + deliveryFee;
+  const status = 'pending';
 
-  return { customer, items, total, status };
+  return { customer, items, subtotal, deliveryFee, total, status };
 }
 
 function ensureMember(state, customer) {
@@ -253,11 +342,7 @@ setInterval(() => {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
+    res.writeHead(204, getCorsHeaders(req));
     res.end();
     return;
   }
@@ -265,24 +350,36 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname;
 
+  if (req.method === 'GET' && pathname === '/favicon.ico') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (req.method === 'GET' && (pathname === '/' || pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/index.html')) {
     sendHtmlFile(res, ADMIN_FILE);
     return;
   }
 
   if (req.method === 'GET' && pathname === '/api') {
-    sendJson(res, 200, { success: true, message: 'Kung Fu Tea backend is running' });
+    sendJson(req, res, 200, {
+      success: true,
+      message: 'Kung Fu Tea backend is running',
+      adminAuthConfigured: Boolean(ADMIN_TOKEN)
+    });
     return;
   }
 
   if (req.method === 'GET' && pathname === '/api/stats') {
-    sendJson(res, 200, { success: true, stats: calcStats(state.orders) });
+    if (!requireAdminAuth(req, res, url)) return;
+    sendJson(req, res, 200, { success: true, stats: calcStats(state.orders) });
     return;
   }
 
   if (req.method === 'GET' && pathname === '/api/orders') {
+    if (!requireAdminAuth(req, res, url)) return;
     const orders = [...state.orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    sendJson(res, 200, { success: true, orders });
+    sendJson(req, res, 200, { success: true, orders });
     return;
   }
 
@@ -295,6 +392,8 @@ const server = http.createServer(async (req, res) => {
         status: normalized.status,
         customer: normalized.customer,
         items: normalized.items,
+        subtotal: normalized.subtotal,
+        deliveryFee: normalized.deliveryFee,
         total: normalized.total,
         createdAt: nowIso()
       };
@@ -303,9 +402,9 @@ const server = http.createServer(async (req, res) => {
       ensureMember(state, order.customer);
       saveState(state);
       broadcast({ type: 'NEW_ORDER', order });
-      sendJson(res, 201, { success: true, order });
+      sendJson(req, res, 201, { success: true, order });
     } catch (error) {
-      sendJson(res, 400, { success: false, message: error.message });
+      sendJson(req, res, 400, { success: false, message: error.message });
     }
     return;
   }
@@ -315,15 +414,15 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const customerAddress = String(body.customerAddress || '').trim();
       const storeAddress = String(body.storeAddress || '').trim();
-      const apiKey = String(process.env.KUNGFU_TEA_SERPAPI_KEY || body.apiKey || '').trim();
+      const apiKey = String(process.env.KUNGFU_TEA_SERPAPI_KEY || '').trim();
       const normalizedCustomerAddress = customerAddress.replace(/\s+/g, '');
 
       if (!customerAddress || !storeAddress) {
-        sendJson(res, 400, { success: false, message: 'customerAddress 與 storeAddress 為必填' });
+        sendJson(req, res, 400, { success: false, message: 'customerAddress 與 storeAddress 為必填' });
         return;
       }
       if (normalizedCustomerAddress.includes('四維路90號')) {
-        sendJson(res, 200, {
+        sendJson(req, res, 200, {
           success: true,
           distanceKm: 0.5,
           durationText: '約 2-5 分',
@@ -332,7 +431,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       if (!apiKey) {
-        sendJson(res, 400, { success: false, message: '缺少 SerpApi 金鑰（KUNGFU_TEA_SERPAPI_KEY）' });
+        sendJson(req, res, 200, {
+          success: false,
+          message: '缺少 SerpApi 金鑰（KUNGFU_TEA_SERPAPI_KEY），改用前端備援估算',
+          source: 'missing_api_key'
+        });
         return;
       }
 
@@ -366,10 +469,10 @@ const server = http.createServer(async (req, res) => {
         if (Number.isFinite(lat) && Number.isFinite(lng)) {
           const distanceKm = calculateHaversineDistance(24.913547308670775, 121.18078338776571, lat, lng);
           if (distanceKm > 40) {
-            sendJson(res, 200, { success: false, message: '搜索座標距離異常，改用前端備援估算' });
+            sendJson(req, res, 200, { success: false, message: '搜索座標距離異常，改用前端備援估算' });
             return;
           }
-          sendJson(res, 200, {
+          sendJson(req, res, 200, {
             success: true,
             distanceKm,
             durationText: 'Google 搜尋座標估算',
@@ -378,7 +481,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        sendJson(res, 200, { success: false, message: 'Directions/搜索皆無有效座標' });
+        sendJson(req, res, 200, { success: false, message: 'Directions/搜索皆無有效座標' });
         return;
       }
 
@@ -401,28 +504,29 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (!Number.isFinite(distanceKm)) {
-        sendJson(res, 200, { success: false, message: '無法解析距離' });
+        sendJson(req, res, 200, { success: false, message: '無法解析距離' });
         return;
       }
 
-      sendJson(res, 200, {
+      sendJson(req, res, 200, {
         success: true,
         distanceKm,
         durationText,
         source: 'google_maps_directions'
       });
     } catch (error) {
-      sendJson(res, 500, { success: false, message: error.message });
+      sendJson(req, res, 500, { success: false, message: error.message });
     }
     return;
   }
 
   const statusMatch = pathname.match(/^\/api\/orders\/(\d+)\/status$/);
   if (req.method === 'PUT' && statusMatch) {
+    if (!requireAdminAuth(req, res, url)) return;
     const orderId = Number(statusMatch[1]);
     const order = state.orders.find(item => Number(item.id) === orderId);
     if (!order) {
-      sendJson(res, 404, { success: false, message: '找不到訂單' });
+      sendJson(req, res, 404, { success: false, message: '找不到訂單' });
       return;
     }
 
@@ -430,45 +534,48 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const status = String(body.status || '').trim();
       if (!VALID_STATUSES.has(status)) {
-        sendJson(res, 400, { success: false, message: '無效的訂單狀態' });
+        sendJson(req, res, 400, { success: false, message: '無效的訂單狀態' });
         return;
       }
       order.status = status;
       order.updatedAt = nowIso();
       saveState(state);
       broadcast({ type: 'ORDER_UPDATED', order });
-      sendJson(res, 200, { success: true, order });
+      sendJson(req, res, 200, { success: true, order });
     } catch (error) {
-      sendJson(res, 400, { success: false, message: error.message });
+      sendJson(req, res, 400, { success: false, message: error.message });
     }
     return;
   }
 
   if (req.method === 'GET' && pathname === '/api/members') {
+    if (!requireAdminAuth(req, res, url)) return;
     const members = [...state.members].sort((a, b) => Number(a.id) - Number(b.id));
-    sendJson(res, 200, { success: true, members });
+    sendJson(req, res, 200, { success: true, members });
     return;
   }
 
   const memberOrdersMatch = pathname.match(/^\/api\/members\/(\d+)\/orders$/);
   if (req.method === 'GET' && memberOrdersMatch) {
+    if (!requireAdminAuth(req, res, url)) return;
     const memberId = Number(memberOrdersMatch[1]);
     const member = state.members.find(item => Number(item.id) === memberId);
     if (!member) {
-      sendJson(res, 200, { success: true, orders: [] });
+      sendJson(req, res, 200, { success: true, orders: [] });
       return;
     }
     const orders = state.orders.filter(order => order.customer && order.customer.phone === member.phone);
-    sendJson(res, 200, { success: true, orders });
+    sendJson(req, res, 200, { success: true, orders });
     return;
   }
 
   if (req.method === 'GET' && pathname === '/api/events') {
+    if (!requireAdminAuth(req, res, url)) return;
     res.writeHead(200, {
+      ...getCorsHeaders(req),
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
+      Connection: 'keep-alive'
     });
     res.write(': connected\n\n');
     sseClients.add(res);
@@ -476,10 +583,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  sendJson(res, 404, { success: false, message: 'API route not found' });
+  sendJson(req, res, 404, { success: false, message: 'API route not found' });
 });
 
 server.listen(PORT, () => {
   console.log(`[backend] listening on http://localhost:${PORT}`);
   console.log(`[backend] data file: ${DATA_FILE}`);
+  console.log(`[backend] admin auth: ${ADMIN_TOKEN ? 'enabled' : 'missing KUNGFU_TEA_ADMIN_TOKEN'}`);
+  console.log(`[backend] allowed origins: ${ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.join(', ') : 'localhost only by default'}`);
 });

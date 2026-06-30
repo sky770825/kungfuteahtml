@@ -779,6 +779,61 @@
         transform: translateY(-1px);
       }
 
+      .order-submit-note {
+        margin: 6px 0 16px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(45, 90, 39, 0.07);
+        color: var(--kt-text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        text-align: left;
+      }
+
+      .order-complete-summary {
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(45, 90, 39, 0.08);
+        color: var(--kt-text);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        text-align: left;
+      }
+
+      .order-complete-preview {
+        background: var(--kt-bg);
+        border: 1px solid var(--kt-border);
+        border-radius: 14px;
+        max-height: 42vh;
+        overflow: auto;
+        padding: 14px;
+        margin: 12px 0 16px;
+        font-family: 'Noto Sans TC', ui-monospace, monospace;
+        font-size: 0.9rem;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        text-align: left;
+      }
+
+      .order-complete-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .order-complete-actions .btn,
+      .order-complete-actions .copy-btn {
+        flex: 1 1 170px;
+      }
+
+      .saved-order-items {
+        margin-top: 8px;
+        color: var(--kt-text-muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
       .btn {
         padding: 14px 20px;
         border: none;
@@ -2047,10 +2102,13 @@
 
             <button class="copy-btn"
                     id="copy-order"
-                    disabled>📋 複製訂單文字後點擊下方↓</button>
+                    disabled>📋 複製訂單內容</button>
             <button class="btn btn-primary"
                     id="send-order"
-                    disabled>將訂單發送到 LINE 官方帳號</button>
+                    disabled>開啟 LINE 官方帳號</button>
+            <div class="order-submit-note">
+              本頁不會自動送出訂單，也不會傳送到後台。請先複製上方訂單內容，再貼到 LINE 官方帳號，等店家回覆確認後才算訂購成功。
+            </div>
 
             <!-- 聯絡方式區域 -->
             <div class="contact-links-container"
@@ -2377,6 +2435,7 @@
         let currentOrder = [];
         let currentBeverage = null;
         let savedOrders = JSON.parse(localStorage.getItem('kungfuTeaOrders') || '[]');
+        const MAX_SAVED_ORDERS = 10;
 
         // DOM 元素
         const menuContainer = document.getElementById('menu-container');
@@ -2401,57 +2460,92 @@
         const deliveryAddress = document.getElementById('delivery-address');
         const deliveryTime = document.getElementById('delivery-time');
         const deliveryTimeUnit = document.getElementById('delivery-time-unit');
-        const BACKEND_API_FALLBACK_URL = 'http://localhost:3000/api';
         const CONFIGURED_BACKEND_API_URL = String(window.KUNGFU_TEA_BACKEND_API_URL || '').trim().replace(/\/$/, '');
-        let resolvedBackendApiUrl = '';
-        let backendApiResolutionPromise = null;
+        const COPY_ORDER_DEFAULT_TEXT = '📋 複製訂單內容';
+        const LINE_OFFICIAL_URL = 'https://lin.ee/QmyIa34';
 
-        function getBackendApiCandidates() {
-          const candidates = [];
-          if (CONFIGURED_BACKEND_API_URL) candidates.push(CONFIGURED_BACKEND_API_URL);
-          const isLocalStaticPreview = ['localhost', '127.0.0.1', '::1'].includes(location.hostname) &&
-            location.port &&
-            location.port !== '3000';
-          if (isLocalStaticPreview) {
-            candidates.push(BACKEND_API_FALLBACK_URL);
-          }
-          if (location.protocol === 'http:' || location.protocol === 'https:') {
-            candidates.push(`${location.origin}/api`);
-          }
-          if (!isLocalStaticPreview) {
-            candidates.push(BACKEND_API_FALLBACK_URL);
-          }
-          return [...new Set(candidates.map(url => url.replace(/\/$/, '')))];
+        function escapeHtml(value) {
+          return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
         }
 
-        async function resolveBackendApiUrl() {
-          if (resolvedBackendApiUrl) return resolvedBackendApiUrl;
-          if (!backendApiResolutionPromise) {
-            backendApiResolutionPromise = (async () => {
-              const candidates = getBackendApiCandidates();
-              for (const baseUrl of candidates) {
-                try {
-                  const response = await fetch(baseUrl, { method: 'GET' });
-                  if (!response.ok) continue;
-                  const data = await response.json();
-                  if (data && data.success) {
-                    resolvedBackendApiUrl = baseUrl;
-                    return resolvedBackendApiUrl;
-                  }
-                } catch (error) {
-                  // Try the next backend candidate.
-                }
-              }
-              resolvedBackendApiUrl = CONFIGURED_BACKEND_API_URL || BACKEND_API_FALLBACK_URL;
-              return resolvedBackendApiUrl;
-            })();
-          }
-          return backendApiResolutionPromise;
+        function cloneOrderItems(items = currentOrder) {
+          return JSON.parse(JSON.stringify(items || []));
         }
 
-        async function fetchBackendApi(path, options = {}) {
-          const baseUrl = await resolveBackendApiUrl();
-          return fetch(`${baseUrl}${path}`, options);
+        function getOrderItemsSummary(items = []) {
+          return normalizeSavedOrderItems(items)
+            .map(item => `${item.beverage?.name || '飲品'} ${item.size || 'L'} ×${item.quantity || 1}`)
+            .join('、');
+        }
+
+        function getOrderFingerprint(orderData) {
+          return JSON.stringify({
+            name: orderData.name,
+            phone: orderData.phone,
+            address: orderData.address,
+            deliveryTime: orderData.deliveryTime,
+            deliveryTimeUnit: orderData.deliveryTimeUnit,
+            items: normalizeSavedOrderItems(orderData.items).map(item => ({
+              name: item.beverage?.name || '',
+              size: item.size || '',
+              tea: item.tea || '',
+              sugar: item.sugar || '',
+              ice: item.ice || '',
+              toppings: item.toppings || [],
+              quantity: item.quantity || 1
+            }))
+          });
+        }
+
+        function buildCurrentOrderRecord(source = 'manual') {
+          const name = customerName.value.trim();
+          const phone = customerPhone.value.trim();
+          const address = deliveryAddress.value.trim();
+          const time = deliveryTime.value;
+          const timeUnit = deliveryTimeUnit.value;
+          const items = cloneOrderItems();
+          const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+          const now = new Date();
+          const orderData = {
+            id: Date.now(),
+            source,
+            name,
+            phone,
+            address,
+            deliveryTime: time,
+            deliveryTimeUnit: timeUnit,
+            items,
+            total: subtotal,
+            previewText: orderPreview.textContent || '',
+            saveTime: now.toLocaleString('zh-TW'),
+            updatedAt: now.toISOString()
+          };
+          orderData.fingerprint = getOrderFingerprint(orderData);
+          return orderData;
+        }
+
+        function persistSavedOrders() {
+          localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+          updateLoadOrdersButton();
+        }
+
+        function saveOrderRecord(orderData) {
+          const fingerprint = orderData.fingerprint || getOrderFingerprint(orderData);
+          const existingIndex = savedOrders.findIndex(order => (order.fingerprint || getOrderFingerprint(order)) === fingerprint);
+          if (existingIndex !== -1) {
+            savedOrders.splice(existingIndex, 1);
+          }
+          savedOrders.unshift({ ...orderData, fingerprint });
+          while (savedOrders.length > MAX_SAVED_ORDERS) {
+            savedOrders.pop();
+          }
+          persistSavedOrders();
+          return savedOrders[0];
         }
 
         // 初始化菜單
@@ -3204,7 +3298,7 @@
           previewText += `\n謝謝店家 麻煩幫我${deliveryTimeText}送達 🙏`;
           previewText += `\n\n================`;
           previewText += `\n📢 重要提醒：`;
-          previewText += `\n• 發送此訂單訊息後，請立即撥打官方LINE確認`;
+          previewText += `\n• 請複製本訂單內容，手動貼到 LINE 官方帳號`;
           previewText += `\n• 確認店家收到訂單並回覆後，才算訂購成功`;
           previewText += `\n• 如有任何問題，請直接聯繫店家`;
           previewText += `\n• 感謝您的訂購，祝您用餐愉快！`;
@@ -3214,95 +3308,118 @@
           sendOrderBtn.disabled = false;
         }
 
-        // 複製訂單文字
-        copyOrderBtn.onclick = async () => {
+        async function writeTextToClipboard(text) {
+          if (!String(text || '').trim()) {
+            return false;
+          }
+
           try {
-            await navigator.clipboard.writeText(orderPreview.textContent);
-            copyOrderBtn.textContent = '✅ 已複製！';
-            setTimeout(() => {
-              copyOrderBtn.textContent = '📋 複製訂單文字後點擊下方↓';
-            }, 2000);
+            if (!navigator.clipboard || !window.isSecureContext) {
+              throw new Error('Clipboard API unavailable');
+            }
+            await Promise.race([
+              navigator.clipboard.writeText(text),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Clipboard timeout')), 800))
+            ]);
           } catch (err) {
-            // 備用複製方法
             const textArea = document.createElement('textarea');
-            textArea.value = orderPreview.textContent;
+            textArea.value = text;
+            textArea.setAttribute('readonly', '');
+            textArea.style.position = 'fixed';
+            textArea.style.top = '-9999px';
             document.body.appendChild(textArea);
             textArea.select();
-            document.execCommand('copy');
+            const didCopy = document.execCommand('copy');
             document.body.removeChild(textArea);
+            if (!didCopy) {
+              return false;
+            }
+          }
 
-            copyOrderBtn.textContent = '✅ 已複製！';
+          return true;
+        }
+
+        async function copyOrderText({ showFeedback = true } = {}) {
+          const text = orderPreview.textContent || '';
+          if (!text.trim() || currentOrder.length === 0) {
+            return false;
+          }
+
+          const copied = await writeTextToClipboard(text);
+          if (!copied) {
+            return false;
+          }
+
+          if (showFeedback) {
+            copyOrderBtn.textContent = '✅ 已複製，請貼到 LINE';
             setTimeout(() => {
-              copyOrderBtn.textContent = '📋 複製訂單文字後點擊下方↓';
+              copyOrderBtn.textContent = COPY_ORDER_DEFAULT_TEXT;
             }, 2000);
           }
-        };
 
-        function buildBackendOrderPayload() {
-          const name = customerName.value.trim();
-          const phone = customerPhone.value.trim();
-          const address = deliveryAddress.value.trim();
-          const notes = `希望送達時間：${deliveryTime.value}${deliveryTimeUnit.value}`;
-          currentOrder.forEach(item => {
-            if (!Number.isFinite(Number(item.price)) || Number(item.price) <= 0) {
-              item.price = calculateOrderItemPrice(item);
+          return true;
+        }
+
+        function showOrderCompletionModal({ savedRecord, copied = false, lineOpened = false }) {
+          document.getElementById('order-complete-modal')?.remove();
+
+          const previewText = savedRecord?.previewText || orderPreview.textContent || '';
+          const modal = document.createElement('div');
+          modal.className = 'modal';
+          modal.id = 'order-complete-modal';
+          modal.style.display = 'block';
+          modal.innerHTML = `
+            <div class="modal-content" style="max-width: 720px;">
+              <h3 class="modal-title">訂單內容已準備完成</h3>
+              <div class="order-complete-summary">
+                <div><strong>下一步：</strong>請到 LINE 官方帳號貼上訂單內容，等店家回覆確認後才算訂購成功。</div>
+                <div><strong>本機紀錄：</strong>這筆訂單已儲存在此裝置，可從「載入訂單」找回過往品項。</div>
+                <div><strong>複製狀態：</strong>${copied ? '已複製，可以直接貼到 LINE。' : '尚未複製，請按下方「複製訂單預覽」。'}</div>
+                <div><strong>LINE 狀態：</strong>${lineOpened ? '已開啟 LINE 官方帳號。' : '瀏覽器阻擋彈出視窗，請按下方按鈕手動開啟。'}</div>
+              </div>
+              <div class="order-complete-preview" id="order-complete-preview"></div>
+              <div class="order-complete-actions">
+                <button class="copy-btn" id="complete-copy-order" type="button">📋 複製訂單預覽</button>
+                <button class="btn btn-primary" id="complete-open-line" type="button">開啟 LINE 官方帳號</button>
+                <button class="btn btn-secondary" id="complete-close" type="button">回到頁面</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+
+          modal.querySelector('#order-complete-preview').textContent = previewText;
+          modal.querySelector('#complete-copy-order').onclick = async () => {
+            const ok = await writeTextToClipboard(previewText);
+            const btn = modal.querySelector('#complete-copy-order');
+            btn.textContent = ok ? '✅ 已複製，請貼到 LINE' : '⚠️ 請手動複製預覽';
+            if (ok) {
+              setTimeout(() => {
+                btn.textContent = '📋 複製訂單預覽';
+              }, 2000);
             }
-          });
-          const subtotal = currentOrder.reduce((sum, item) => sum + Number(item.price || 0), 0);
-          const deliveryLevel = getCurrentDeliveryLevel();
-          const deliveryFee = deliveryLevel && subtotal < deliveryLevel.freeShipping ? deliveryLevel.fee : 0;
-          const total = subtotal + deliveryFee;
-
-          const items = currentOrder.map(item => {
-            const quantity = Number(item.quantity || 1);
-            const lineTotal = Number(item.price || 0);
-            const unitPrice = quantity > 0 ? Math.round(lineTotal / quantity) : lineTotal;
-            const optionParts = [item.tea, item.sugar, item.ice].filter(Boolean);
-            if (item.toppings && item.toppings.length > 0) {
-              optionParts.push(`加料:${item.toppings.join('+')}`);
+          };
+          modal.querySelector('#complete-open-line').onclick = () => {
+            window.open(LINE_OFFICIAL_URL, '_blank');
+          };
+          modal.querySelector('#complete-close').onclick = () => {
+            modal.remove();
+          };
+          modal.onclick = (event) => {
+            if (event.target === modal) {
+              modal.remove();
             }
-            const optionText = optionParts.length ? `（${optionParts.join(' / ')}）` : '';
-
-            return {
-              name: `${item.beverage.name}${optionText}`,
-              size: item.size || 'L',
-              price: unitPrice,
-              quantity: quantity,
-              total: lineTotal
-            };
-          });
-
-          return {
-            customer: {
-              name,
-              phone,
-              method: 'delivery',
-              address,
-              notes
-            },
-            items,
-            subtotal,
-            deliveryFee,
-            total,
-            status: 'pending'
           };
         }
 
-        // 送單到後台（共用：POST 並回傳結果）
-        async function syncOrderToBackend() {
-          const response = await fetchBackendApi('/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(buildBackendOrderPayload())
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            throw new Error(result.message || `HTTP ${response.status}`);
+        // 複製訂單文字
+        copyOrderBtn.onclick = async () => {
+          const copied = await copyOrderText();
+          if (!copied) {
+            showCuteAlert('複製失敗', '請長按或手動選取上方訂單預覽內容後複製。', '📋');
           }
-          return result;
-        }
+        };
 
-        // 發送給 LINE 官方（背景同步後台，不顯示同步成功提示）
+        // 開啟 LINE 官方帳號；訂單內容由客人手動貼上，不送後台。
         sendOrderBtn.onclick = async () => {
           if (currentOrder.length === 0) {
             showCuteAlert('訂單為空！', '請先加入飲品再送出訂單～', '📝');
@@ -3312,20 +3429,20 @@
 
           const originalText = sendOrderBtn.textContent;
           sendOrderBtn.disabled = true;
-          sendOrderBtn.textContent = '⏳ 開啟中...';
+          sendOrderBtn.textContent = '⏳ 正在複製並開啟 LINE...';
 
-          try {
-            await syncOrderToBackend();
-          } catch (error) {
-            showCuteAlert('後台同步失敗', `無法同步到後台：${error.message}\n仍會開啟 LINE 送單。`, '⚠️');
-          } finally {
-            sendOrderBtn.disabled = false;
-            sendOrderBtn.textContent = originalText;
-          }
+          const lineWindow = window.open(LINE_OFFICIAL_URL, '_blank');
+          const savedRecord = saveOrderRecord(buildCurrentOrderRecord('completed'));
+          const copied = await copyOrderText({ showFeedback: false });
 
-          const orderText = encodeURIComponent(orderPreview.textContent);
-          const lineUrl = `https://lin.ee/QmyIa34?text=${orderText}`;
-          window.open(lineUrl, '_blank');
+          sendOrderBtn.disabled = false;
+          sendOrderBtn.textContent = originalText;
+
+          showOrderCompletionModal({
+            savedRecord,
+            copied,
+            lineOpened: Boolean(lineWindow)
+          });
         };
 
         // 儲存訂單
@@ -3339,97 +3456,96 @@
             return;
           }
 
-          const name = customerName.value.trim();
-          const phone = customerPhone.value.trim();
-          const address = deliveryAddress.value.trim();
-          const time = deliveryTime.value;
-          const timeUnit = deliveryTimeUnit.value;
+          if (!checkOrderInfo()) return;
 
-          if (!name || !phone || !address || !time) {
-            showCuteAlert(
-              '請先填寫訂購資訊！',
-              '請先填寫完整的訂購資訊後再儲存哦～',
-              '📋'
-            );
-            return;
-          }
-
-          const orderData = {
-            id: Date.now(),
-            name: name,
-            phone: phone,
-            address: address,
-            deliveryTime: time,
-            deliveryTimeUnit: timeUnit,
-            items: [...currentOrder],
-            total: currentOrder.reduce((sum, item) => sum + item.price, 0),
-            saveTime: new Date().toLocaleString('zh-TW')
-          };
-
-          // 檢查是否超過10個訂單
-          if (savedOrders.length >= 10) {
+          const orderData = buildCurrentOrderRecord('manual');
+          const isExistingOrder = savedOrders.some(order => (order.fingerprint || getOrderFingerprint(order)) === orderData.fingerprint);
+          if (!isExistingOrder && savedOrders.length >= MAX_SAVED_ORDERS) {
             if (confirm('已儲存10個訂單，是否要覆蓋最舊的訂單？')) {
-              savedOrders.shift(); // 移除最舊的訂單
+              savedOrders.pop();
             } else {
               return;
             }
           }
 
-          savedOrders.push(orderData);
-          localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+          const savedRecord = saveOrderRecord(orderData);
 
           showCuteAlert(
             '儲存成功！',
-            `訂單已儲存！\n訂單編號: ${orderData.id}\n儲存時間: ${orderData.saveTime}`,
+            `訂單已儲存在本機！\n訂單編號: ${savedRecord.id}\n儲存時間: ${savedRecord.saveTime}`,
             '✅'
           );
-          updateLoadOrdersButton();
         };
+
+        function loadSavedOrder(order) {
+          if (!order) return false;
+          customerName.value = order.name || '';
+          customerPhone.value = order.phone || '';
+          deliveryAddress.value = order.address || '';
+          deliveryTime.value = order.deliveryTime || '';
+          deliveryTimeUnit.value = order.deliveryTimeUnit || '整';
+          currentOrder = normalizeSavedOrderItems(order.items);
+          updateOrderDisplay();
+          updateOrderPreview();
+          deliveryAddress.dispatchEvent(new Event('input', { bubbles: true }));
+          return true;
+        }
 
         // 載入訂單列表
         loadOrdersBtn.onclick = () => {
           if (savedOrders.length === 0) {
             showCuteAlert(
               '沒有儲存的訂單！',
-              '目前沒有儲存的訂單哦～',
+              '目前這台裝置沒有本機訂購紀錄哦～',
               '📭'
             );
             return;
           }
 
           // 創建訂單選擇模態框
+          const sortedOrders = [...savedOrders].sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
           const orderModal = document.createElement('div');
           orderModal.className = 'modal';
           orderModal.style.display = 'block';
           orderModal.innerHTML = `
                 <div class="modal-content" style="max-width: 600px;">
-                    <h3 class="modal-title">選擇要載入的訂單</h3>
+                    <h3 class="modal-title">本機訂購紀錄</h3>
+                    <div style="color: var(--kt-text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 12px;">
+                      紀錄只會存在目前這台手機或裝置。可載入過往品項產生預覽，也可以直接載入並複製訂單內容。
+                    </div>
                     <div class="orders-list" style="max-height: 400px; overflow-y: auto;">
-                        ${savedOrders.map((order, index) => `
+                        ${sortedOrders.map((order, index) => {
+                          const sourceText = order.source === 'completed' ? '完成時自動儲存' : '手動儲存';
+                          const itemsSummary = getOrderItemsSummary(order.items) || '未記錄品項';
+                          return `
                             <div class="order-item-select" data-order-id="${order.id}">
                                 <div class="order-item-header">
-                                    <span>訂單 #${order.id}</span>
-                                    <span class="price">$${order.total}</span>
+                                    <span>紀錄 #${index + 1}</span>
+                                    <span class="price">$${Number(order.total || 0)}</span>
                                 </div>
                                 <div class="order-item-details">
                                     <div>
-                                        <strong>${order.name}</strong><br>
-                                        📞 ${order.phone}<br>
-                                        📍 ${order.address}
+                                        <strong>${escapeHtml(order.name || '未填姓名')}</strong><br>
+                                        📞 ${escapeHtml(order.phone || '未填電話')}<br>
+                                        📍 ${escapeHtml(order.address || '未填地址')}<br>
+                                        ⏰ ${escapeHtml(`${order.deliveryTime || ''}${order.deliveryTimeUnit || ''}` || '未填時間')}
+                                        <div class="saved-order-items">品項：${escapeHtml(itemsSummary)}</div>
                                     </div>
                                     <div class="order-actions">
-                                        <button class="btn btn-primary load-order-btn" data-order-id="${order.id}">載入</button>
+                                        <button class="btn btn-primary load-order-btn" data-order-id="${order.id}">載入預覽</button>
+                                        <button class="btn btn-secondary copy-saved-order-btn" data-order-id="${order.id}">載入並複製</button>
                                         <button class="btn btn-secondary delete-order-btn" data-order-id="${order.id}">刪除</button>
                                     </div>
                                 </div>
                                 <div style="color: var(--kt-text-muted); font-size: 0.8rem; margin-top: 5px;">
-                                    儲存時間: ${order.saveTime}
+                                    ${escapeHtml(sourceText)}: ${escapeHtml(order.saveTime || '')}
                                 </div>
                             </div>
-                        `).join('')}
+                          `;
+                        }).join('')}
                     </div>
                     <div class="modal-buttons">
-                        <button class="btn btn-secondary" id="clear-all-orders">清空所有訂單</button>
+                        <button class="btn btn-secondary" id="clear-all-orders">清空所有紀錄</button>
                         <button class="btn btn-secondary" id="close-orders-modal">關閉</button>
                     </div>
                 </div>
@@ -3453,15 +3569,17 @@
                     border-color: var(--kt-primary);
                     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
                 }
-                .order-actions {
-                    display: flex;
-                    gap: 8px;
-                }
-                .order-actions .btn {
-                    padding: 8px 12px;
-                    font-size: 0.9rem;
-                }
-            `;
+	                .order-actions {
+	                    display: flex;
+	                    gap: 8px;
+                      flex-wrap: wrap;
+	                }
+	                .order-actions .btn {
+	                    padding: 8px 12px;
+	                    font-size: 0.9rem;
+                      min-width: 100px;
+	                }
+	            `;
           document.head.appendChild(style);
 
           // 載入訂單
@@ -3470,56 +3588,70 @@
               e.stopPropagation();
               const orderId = parseInt(btn.dataset.orderId);
               const order = savedOrders.find(order => order.id === orderId);
-              if (order) {
-                customerName.value = order.name;
-                customerPhone.value = order.phone;
-                deliveryAddress.value = order.address;
-                deliveryTime.value = order.deliveryTime || '';
-                deliveryTimeUnit.value = order.deliveryTimeUnit || '整';
-                currentOrder = normalizeSavedOrderItems(order.items);
-                updateOrderDisplay();
-                updateOrderPreview();
+              if (loadSavedOrder(order)) {
                 document.body.removeChild(orderModal);
                 document.head.removeChild(style);
                 showCuteAlert(
                   '載入成功！',
-                  '訂單已載入！',
+                  '過往品項已載入，現在可以直接複製訂單預覽。',
                   '🎉'
                 );
               }
             };
           });
 
-          // 刪除訂單
+          // 載入並直接複製訂單
+          orderModal.querySelectorAll('.copy-saved-order-btn').forEach(btn => {
+            btn.onclick = async (e) => {
+              e.stopPropagation();
+              const orderId = parseInt(btn.dataset.orderId);
+              const order = savedOrders.find(order => order.id === orderId);
+              if (loadSavedOrder(order)) {
+                document.body.removeChild(orderModal);
+                document.head.removeChild(style);
+                const copied = await copyOrderText({ showFeedback: false });
+                showCuteAlert(
+                  copied ? '已載入並複製！' : '已載入訂單',
+                  copied ? '訂單預覽已複製，請貼到 LINE 官方帳號。' : '瀏覽器未允許自動複製，請按「複製訂單內容」。',
+                  copied ? '✅' : '📋'
+                );
+              }
+            };
+          });
+
+          // 刪除紀錄
           orderModal.querySelectorAll('.delete-order-btn').forEach(btn => {
             btn.onclick = (e) => {
               e.stopPropagation();
-              if (confirm('確定要刪除這個訂單嗎？')) {
+              if (confirm('確定要刪除這筆本機紀錄嗎？')) {
                 const orderId = parseInt(btn.dataset.orderId);
                 const orderIndex = savedOrders.findIndex(order => order.id === orderId);
                 if (orderIndex !== -1) {
                   savedOrders.splice(orderIndex, 1);
-                  localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+                  persistSavedOrders();
                   // 重新載入模態框
                   document.body.removeChild(orderModal);
                   document.head.removeChild(style);
-                  loadOrdersBtn.click();
+                  if (savedOrders.length > 0) {
+                    loadOrdersBtn.click();
+                  } else {
+                    showCuteAlert('沒有儲存紀錄', '目前這台裝置沒有本機訂購紀錄。', '📭');
+                  }
                 }
               }
             };
           });
 
-          // 清空所有訂單
+          // 清空所有紀錄
           orderModal.querySelector('#clear-all-orders').onclick = () => {
-            if (confirm('確定要清空所有儲存的訂單嗎？')) {
+            if (confirm('確定要清空所有本機訂購紀錄嗎？')) {
               savedOrders = [];
-              localStorage.setItem('kungfuTeaOrders', JSON.stringify(savedOrders));
+              persistSavedOrders();
               document.body.removeChild(orderModal);
               document.head.removeChild(style);
-              updateLoadOrdersButton();
               showCuteAlert(
                 '清空完成！',
-                '所有訂單已清空！',
+                '所有本機紀錄已清空！',
                 '🗑️'
               );
             }
@@ -3542,7 +3674,7 @@
 
         // 更新載入訂單按鈕文字
         function updateLoadOrdersButton() {
-          loadOrdersBtn.textContent = `📋 載入訂單 (${savedOrders.length}/10)`;
+          loadOrdersBtn.textContent = `📋 載入訂單 (${savedOrders.length}/${MAX_SAVED_ORDERS})`;
         }
 
         // 清空訂單
@@ -3781,8 +3913,12 @@
         }
 
         async function calculateDistanceViaBackend(customerAddress) {
+          if (!CONFIGURED_BACKEND_API_URL) {
+            return null;
+          }
+
           try {
-            const response = await fetchBackendApi('/distance', {
+            const response = await fetch(`${CONFIGURED_BACKEND_API_URL}/distance`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -3805,9 +3941,9 @@
           }
         }
 
-        // 使用後端 SerpApi 代理計算距離；前端不保存或傳送 API Key。
+        // 如有明確設定後端代理才精算距離；正式靜態站預設使用本機估算，不探測後台。
         async function calculateDistanceWithGoogleMaps(customerAddress, requestId = 0) {
-          console.log('開始後端距離精算:', customerAddress);
+          console.log(CONFIGURED_BACKEND_API_URL ? '開始後端距離精算:' : '使用本機距離估算:', customerAddress);
 
           const backendDistance = await calculateDistanceViaBackend(customerAddress);
           if (backendDistance && Number.isFinite(backendDistance.distanceKm)) {
@@ -3823,7 +3959,9 @@
             return;
           }
 
-          console.info('後端精算不可用，使用備用距離估算');
+          if (CONFIGURED_BACKEND_API_URL) {
+            console.info('後端精算不可用，使用備用距離估算');
+          }
           useBackupDistanceCalculation(customerAddress, requestId);
         }
 
@@ -4025,7 +4163,7 @@
               const requestId = ++latestDistanceRequestId;
               // 延遲500ms後計算，避免頻繁調用
               distanceCalculationTimeout = setTimeout(() => {
-                // 優先使用後端精算距離；不可用時自動退回估算
+                // 有後端網址才精算；正式靜態站直接使用估算
                 calculateDistanceWithGoogleMaps(address, requestId);
               }, 500);
             } else {
@@ -4033,7 +4171,7 @@
             }
           });
 
-          // 頁面初始若已有地址，直接進行一次 Google 距離計算
+          // 頁面初始若已有地址，直接進行一次距離計算
           const initialAddress = deliveryAddressInput.value.trim();
           if (initialAddress.length > 5) {
             const requestId = ++latestDistanceRequestId;
